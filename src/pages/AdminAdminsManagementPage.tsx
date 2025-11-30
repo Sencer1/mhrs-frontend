@@ -1,43 +1,18 @@
-import React, { useMemo, useState } from "react";
+// src/pages/admin/AdminAdminsManagementPage.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { AdminUser } from "../types/domain";
+import { fetchAdmins } from "../services/adminService";
+import BackButton from "../components/common/BackButton";
+import PageContainer from "../components/layout/PageContainer";
 
 type AdminAdminsManagementPageProps = {
   onBack: () => void;
 };
 
-type AdminUser = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  nationalId: string;
-};
-
-// Şimdilik mock admin listesi
-const initialAdmins: AdminUser[] = [
-  {
-    id: "a1",
-    firstName: "Sistem",
-    lastName: "Yöneticisi",
-    username: "admin",
-    email: "admin@example.com",
-    nationalId: "99999999999",
-  },
-  {
-    id: "a2",
-    firstName: "Ayşe",
-    lastName: "Yönetici",
-    username: "ayse.admin",
-    email: "ayse.admin@example.com",
-    nationalId: "88888888888",
-  },
-];
-
-const AdminAdminsManagementPage: React.FC<AdminAdminsManagementPageProps> = ({
-  onBack,
-}) => {
-  const [admins, setAdmins] = useState<AdminUser[]>(initialAdmins);
-
+export const AdminAdminsManagementPage: React.FC<
+  AdminAdminsManagementPageProps
+> = ({ onBack }) => {
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [searchText, setSearchText] = useState("");
 
   // yeni admin ekleme formu için stateler
@@ -47,6 +22,10 @@ const AdminAdminsManagementPage: React.FC<AdminAdminsManagementPageProps> = ({
   const [newEmail, setNewEmail] = useState("");
   const [newNationalId, setNewNationalId] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  useEffect(() => {
+    fetchAdmins().then((data) => setAdmins(data));
+  }, []);
 
   const visibleAdmins = useMemo(() => {
     const q = searchText.toLocaleLowerCase("tr-TR");
@@ -81,6 +60,7 @@ const AdminAdminsManagementPage: React.FC<AdminAdminsManagementPageProps> = ({
       return;
     }
 
+    // TODO: backend POST /api/admin/users
     const newAdmin: AdminUser = {
       id: `a${Date.now()}`,
       firstName: newFirstName.trim(),
@@ -99,41 +79,22 @@ const AdminAdminsManagementPage: React.FC<AdminAdminsManagementPageProps> = ({
     setNewEmail("");
     setNewNationalId("");
     setNewPassword("");
-
-    // Not: Şifreyi şu an sadece mock olarak istiyoruz.
-    // Gerçek projede bu bilgi backend'e gönderilip hashlenerek saklanacak.
   };
 
   const handleDeleteAdmin = (id: string) => {
+    // TODO: backend DELETE /api/admin/users/{id}
     setAdmins((prev) => prev.filter((a) => a.id !== id));
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1100px", margin: "24px auto" }}>
-      <button
-        onClick={onBack}
-        style={{
-          background: "#e9ecef",
-          border: "1px solid #ccc",
-          borderRadius: "20px",
-          padding: "6px 14px",
-          cursor: "pointer",
-          fontSize: "14px",
-          fontWeight: 500,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          marginBottom: "16px",
-        }}
-      >
-        <span style={{ fontSize: "16px" }}>←</span>
-        <span>Geri</span>
-      </button>
+    <PageContainer>
+      <BackButton onClick={onBack} />
 
       <h2 style={{ marginBottom: "8px" }}>Admin Kullanıcı Yönetimi</h2>
       <p style={{ marginBottom: "20px", color: "#555" }}>
         Buradan sisteme erişimi olan admin kullanıcıları görebilir, yeni admin
-        ekleyebilir veya yetkisini kaldırmak istediğiniz adminleri silebilirsiniz.
+        ekleyebilir veya yetkisini kaldırmak istediğiniz adminleri
+        silebilirsiniz.
       </p>
 
       <div
@@ -377,8 +338,6 @@ const AdminAdminsManagementPage: React.FC<AdminAdminsManagementPageProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
-
-export default AdminAdminsManagementPage;

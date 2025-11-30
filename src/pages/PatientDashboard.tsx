@@ -1,21 +1,14 @@
 import React, { useState } from "react";
-// hasta bilgilernin nasıl tutlduğu
-type PatientInfo = {
-  firstName: string;
-  lastName: string;
-  nationalId: string;
-  bloodGroup: string;   
-  heightCm: number;     
-  weightKg: number; 
-};
-// nereye gideceğini belirliyoruz
+import { PatientInfo } from "../types/domain";
+import PageContainer from "../components/layout/PageContainer";
+
 type PatientDashboardProps = {
   patient: PatientInfo;
   onOpenNewAppointment: () => void;
   onOpenPastAppointments: () => void;
   onOpenFutureAppointments: () => void;
 };
-// geçmiş gelecek randuvalara geçiş yapmak için tıklamayla olucak şekilde 
+
 const PatientDashboard: React.FC<PatientDashboardProps> = ({
   patient,
   onOpenNewAppointment,
@@ -24,20 +17,14 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
 }) => {
   const [showInfo, setShowInfo] = useState(false);
 
-  const handleBilgilerimClick = () => {
-    setShowInfo((prev) => !prev);
-  };
-
   return (
-    <div style={{ padding: "24px", maxWidth: "600px", margin: "24px auto" }}>
-      {/* Hoş geldiniz yazısı */}
+    <PageContainer maxWidth={600}>
       <h1 style={{ marginBottom: "16px" }}>
         Hoş geldiniz, {patient.firstName} {patient.lastName}
       </h1>
 
-      {/* Bilgilerim kutusu */}
       <div
-        onClick={handleBilgilerimClick}
+        onClick={() => setShowInfo((prev) => !prev)}
         style={{
           border: "1px solid #ccc",
           borderRadius: "8px",
@@ -53,19 +40,11 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
         }}
       >
         <span>Bilgilerim</span>
-        <span
-          style={{
-            fontSize: "16px",
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
+        <span style={{ fontSize: "16px", fontWeight: 700 }}>
           {showInfo ? "▲" : "▼"}
         </span>
       </div>
 
-      {/* Bilgilerim paneli */}
       {showInfo && (
         <div
           style={{
@@ -92,7 +71,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
           </p>
           <p>
             <strong>Kilo:</strong> {patient.weightKg} kg
-          </p> 
+          </p>
         </div>
       )}
 
@@ -112,7 +91,6 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
         Gelecek Randevularım
       </div>
 
-      {/* Geçmiş Randevularım kutusu */}
       <div
         onClick={onOpenPastAppointments}
         style={{
@@ -129,7 +107,6 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
         Geçmiş Randevularım
       </div>
 
-      {/* Randevu Al butonu */}
       <button
         onClick={onOpenNewAppointment}
         style={{
@@ -146,7 +123,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
       >
         Randevu Al
       </button>
-    </div>
+    </PageContainer>
   );
 };
 

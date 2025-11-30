@@ -1,58 +1,24 @@
-import React, { useMemo, useState } from "react";
+// src/pages/admin/AdminPrescriptionManagementPage.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { AdminPrescription } from "../types/domain";
+import { fetchAdminPrescriptions } from "../services/adminService";
+import BackButton from "../components/common/BackButton";
+import PageContainer from "../components/layout/PageContainer";
 
 type AdminPrescriptionManagementPageProps = {
   onBack: () => void;
 };
 
-type AdminPrescription = {
-  id: string;
-  date: string; // "2025-11-29"
-  patientName: string;
-  doctorName: string;
-  hospitalName: string;
-  departmentName: string;
-  medicines: string[]; // ilaç isimleri
-};
-
-// Şimdilik sahte veriler (backend gelince buradan alınacak)
-const initialPrescriptions: AdminPrescription[] = [
-  {
-    id: "rx1",
-    date: "2025-11-20",
-    patientName: "Zeynep Kurt",
-    doctorName: "Ahmet Yılmaz",
-    hospitalName: "Ankara Şehir Hastanesi",
-    departmentName: "Kardiyoloji",
-    medicines: ["Aspirin 100 mg", "Beloc ZOK 25 mg"],
-  },
-  {
-    id: "rx2",
-    date: "2025-11-22",
-    patientName: "Mehmet Kara",
-    doctorName: "Elif Demir",
-    hospitalName: "Ankara Şehir Hastanesi",
-    departmentName: "Dahiliye",
-    medicines: ["Metformin 850 mg"],
-  },
-  {
-    id: "rx3",
-    date: "2025-11-25",
-    patientName: "Ayşe Yıldız",
-    doctorName: "Mehmet Kara",
-    hospitalName: "İstanbul Şehir Hastanesi",
-    departmentName: "Kardiyoloji",
-    medicines: ["Atorvastatin 20 mg", "Ramipril 5 mg"],
-  },
-];
-
-const AdminPrescriptionManagementPage: React.FC<
+export const AdminPrescriptionManagementPage: React.FC<
   AdminPrescriptionManagementPageProps
 > = ({ onBack }) => {
-  const [prescriptions, setPrescriptions] =
-    useState<AdminPrescription[]>(initialPrescriptions);
-
-  // arama kutusu: hasta, doktor, hastane, departman, ilaç
+  const [prescriptions, setPrescriptions] = useState<AdminPrescription[]>([]);
   const [filterText, setFilterText] = useState("");
+
+  useEffect(() => {
+    // mock veya backend çağrısı
+    fetchAdminPrescriptions().then((data) => setPrescriptions(data));
+  }, []);
 
   const visiblePrescriptions = useMemo(() => {
     const q = filterText.toLocaleLowerCase("tr-TR");
@@ -76,31 +42,13 @@ const AdminPrescriptionManagementPage: React.FC<
   }, [prescriptions, filterText]);
 
   const handleDeletePrescription = (id: string) => {
-    // Şimdilik tamamen siliyoruz, ileride backend'de "sil" endpoint'ine bağlanır
+    // TODO: backend delete endpoint’ine bağla, sonra listeyi yeniden yükle
     setPrescriptions((prev) => prev.filter((rx) => rx.id !== id));
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1100px", margin: "24px auto" }}>
-      <button
-        onClick={onBack}
-        style={{
-          background: "#e9ecef",
-          border: "1px solid #ccc",
-          borderRadius: "20px",
-          padding: "6px 14px",
-          cursor: "pointer",
-          fontSize: "14px",
-          fontWeight: 500,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          marginBottom: "16px",
-        }}
-      >
-        <span style={{ fontSize: "16px" }}>←</span>
-        <span>Geri</span>
-      </button>
+    <PageContainer>
+      <BackButton onClick={onBack} />
 
       <h2 style={{ marginBottom: "8px" }}>Reçete / İlaç Kayıtları</h2>
       <p style={{ marginBottom: "20px", color: "#555" }}>
@@ -233,8 +181,6 @@ const AdminPrescriptionManagementPage: React.FC<
           </p>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 };
-
-export default AdminPrescriptionManagementPage;

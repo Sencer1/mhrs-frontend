@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
+import BackButton from "../components/common/BackButton";
+import PageContainer from "../components/layout/PageContainer";
 
 type PatientNewAppointmentPageProps = {
   onBack: () => void;
@@ -38,6 +40,7 @@ type DoctorWithState = {
   }[];
 };
 
+// MOCK DATA – backend geldiğinde bunlar API çağrısına taşınacak
 const cities: City[] = [
   { id: "ankara", name: "Ankara" },
   { id: "istanbul", name: "İstanbul" },
@@ -257,6 +260,7 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
     );
     if (!ok) return;
 
+    // TODO: burada backend'e POST /api/appointments ile randevu isteği atılacak
     setDoctors((prev) =>
       prev.map((doc) =>
         doc.id === doctorId
@@ -272,38 +276,22 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
   };
 
   const handleJoinDoctorWaitList = (doctorId: string) => {
+    // TODO: backend POST /api/waiting-list/doctor/{doctorId}
     alert(
       `Bu doktor için tüm randevular dolu. Bekleme listesine eklendiniz. (Mock)`
     );
   };
 
   const handleJoinDepartmentWaitList = () => {
+    // TODO: backend POST /api/waiting-list/department/{departmentId}
     alert(
       "Bu departmandaki tüm doktorların randevuları dolu. Departman bekleme listesine eklendiniz. (Mock)"
     );
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "900px", margin: "24px auto" }}>
-      <button
-        onClick={onBack}
-        style={{
-          background: "#e9ecef",
-          border: "1px solid #ccc",
-          borderRadius: "20px",
-          padding: "6px 14px",
-          cursor: "pointer",
-          fontSize: "14px",
-          fontWeight: 500,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          marginBottom: "16px",
-        }}
-      >
-        <span style={{ fontSize: "16px" }}>←</span>
-        <span>Geri</span>
-      </button>
+    <PageContainer maxWidth={900}>
+      <BackButton onClick={onBack} />
 
       <h2 style={{ marginBottom: "12px" }}>Randevu Alma</h2>
       <p style={{ marginBottom: "20px", color: "#555" }}>
@@ -330,7 +318,7 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
         />
       </div>
 
-      {/* İl / Hastane / Departman kutuları */}
+      {/* İl / Hastane / Departman */}
       <div
         style={{
           display: "grid",
@@ -348,7 +336,7 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
             setSelectedHospitalId(null);
             setSelectedDepartmentId(null);
           }}
-          disabled={!selectedDate} // tarih yoksa kilitli
+          disabled={!selectedDate}
         />
 
         <SearchableSelect
@@ -359,7 +347,7 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
             setSelectedHospitalId(id);
             setSelectedDepartmentId(null);
           }}
-          disabled={!selectedDate || !selectedCityId} // tarih + il yoksa kilitli
+          disabled={!selectedDate || !selectedCityId}
         />
 
         <SearchableSelect
@@ -369,11 +357,11 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
           onSelect={(id) => {
             setSelectedDepartmentId(id);
           }}
-          disabled={!selectedDate || !selectedHospitalId} // tarih + hastane yoksa kilitli
+          disabled={!selectedDate || !selectedHospitalId}
         />
       </div>
 
-      {/* Doktor ve saatler: hem departman hem tarih seçili olmalı */}
+      {/* Doktor + slot listesi */}
       {selectedDepartmentId && selectedDate && (
         <div>
           <h3 style={{ marginBottom: "12px" }}>Doktor ve Saat Seçimi</h3>
@@ -430,7 +418,9 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
                   )}
                 </div>
 
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                <div
+                  style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
+                >
                   {doc.slots.map((slot) => (
                     <button
                       key={slot.time}
@@ -458,7 +448,17 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
                 </div>
 
                 {allSlotsBooked && (
-                  <div style={{ marginTop: "10px" }}>
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      padding: "8px 10px",
+                      borderRadius: "6px",
+                      backgroundColor: "#fff3cd",
+                    }}
+                  >
+                    <p style={{ margin: 0, marginBottom: "8px" }}>
+                      Bu doktor için tüm randevular dolu görünüyor.
+                    </p>
                     <button
                       onClick={() => handleJoinDoctorWaitList(doc.id)}
                       style={{
@@ -481,10 +481,9 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
           {allDoctorsFull && (
             <div
               style={{
-                marginTop: "16px",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid #ccc",
+                marginTop: "12px",
+                padding: "8px 10px",
+                borderRadius: "6px",
                 backgroundColor: "#fff3cd",
               }}
             >
@@ -508,7 +507,7 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
           )}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

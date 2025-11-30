@@ -1,36 +1,36 @@
+// src/App.tsx
 import React, { useState } from "react";
 import LoginPage from "./pages/LoginPage";
-import DoctorDashboard from "./pages/DoctorDashboard";
-import DoctorPastAppointmentsPage from "./pages/DoctorPastAppointmentsPage";
-import DoctorFutureAppointmentsPage from "./pages/DoctorFutureAppointmentsPage";
+import PatientRegisterPage from "./pages/PatientRegisterPage";
 import PatientDashboard from "./pages/PatientDashboard";
 import PatientPastAppointmentsPage from "./pages/PatientPastAppointmentsPage";
 import PatientFutureAppointmentsPage from "./pages/PatientFutureAppointmentsPage";
 import PatientNewAppointmentPage from "./pages/PatientNewAppointmentPage";
+import DoctorDashboard from "./pages/DoctorDashboard";
+import DoctorPastAppointmentsPage from "./pages/DoctorPastAppointmentsPage";
+import DoctorFutureAppointmentsPage from "./pages/DoctorFutureAppointmentsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminHospitalManagementPage from "./pages/AdminHospitalManagementPage";
 import AdminDoctorManagementPage from "./pages/AdminDoctorManagementPage";
 import AdminAppointmentLogPage from "./pages/AdminAppointmentLogPage";
 import AdminPatientManagementPage from "./pages/AdminPatientManagementPage";
-import AdminPrescriptionManagementPage from "./pages/AdminPrescriptionManagementPage";
-import AdminWaitingListManagementPage from "./pages/AdminWaitingListManagementPage";
-import AdminAdminsManagementPage from "./pages/AdminAdminsManagementPage";
-import PatientRegisterPage from "./pages/PatientRegisterPage";
+import { AdminPrescriptionManagementPage } from "./pages/AdminPrescriptionManagementPage";
+import { AdminWaitingListManagementPage } from "./pages/AdminWaitingListManagementPage";
+import { AdminAdminsManagementPage } from "./pages/AdminAdminsManagementPage";
 
-// doktorda açılan sayfalar
+import { UserRole, PatientInfo, DoctorInfo } from "./types/domain";
+
 type DoctorView =
   | "DOCTOR_HOME"
   | "DOCTOR_PAST_APPOINTMENTS"
   | "DOCTOR_FUTURE_APPOINTMENTS";
 
-// hasta için açılan sayfalar
 type PatientView =
   | "PATIENT_HOME"
   | "PATIENT_PAST_APPOINTMENTS"
   | "PATIENT_FUTURE_APPOINTMENTS"
   | "PATIENT_NEW_APPOINTMENT";
 
-// admin için açılan sayfalar
 type AdminView =
   | "ADMIN_HOME"
   | "ADMIN_HOSPITALS"
@@ -41,82 +41,53 @@ type AdminView =
   | "ADMIN_WAITING_LIST"
   | "ADMIN_ADMINS";
 
-// giriş mi kayıt mı
 type AuthView = "LOGIN" | "REGISTER";
 
-// hasta bilgisi tipi
-type PatientInfo = {
-  firstName: string;
-  lastName: string;
-  nationalId: string;
-  bloodGroup: string;
-  heightCm: number;
-  weightKg: number;
-};
-
-// başlangıçta var saydığımız örnek hasta
-const initialPatient: PatientInfo = {
-  firstName: "Zeynep",
-  lastName: "Kurt",
-  nationalId: "22222222222",
-  bloodGroup: "A Rh(+)",
-  heightCm: 165,
-  weightKg: 58,
-};
-
 function App() {
-  // sahte doktor giriş bilgileri
-  const fakeDoctor = {
-    firstName: "Ahmet",
-    lastName: "Yılmaz",
-    nationalId: "1",
-    hospitalName: "Ankara Şehir Hastanesi",
-    departmentName: "Kardiyoloji",
-  };
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [authView, setAuthView] = useState<AuthView>("LOGIN");
 
-  // hangi kullanıcı türüyle giriş yapıldı
-  const [userType, setUserType] = useState<
-    "DOCTOR" | "PATIENT" | "ADMIN" | null
-  >(null);
-
-  // doktor/hasta/admin view stateleri
   const [doctorView, setDoctorView] = useState<DoctorView>("DOCTOR_HOME");
   const [patientView, setPatientView] = useState<PatientView>("PATIENT_HOME");
   const [adminView, setAdminView] = useState<AdminView>("ADMIN_HOME");
 
-  // giriş mi, kayıt ekranı mı?
-  const [authView, setAuthView] = useState<AuthView>("LOGIN");
+  const [currentPatient, setCurrentPatient] = useState<PatientInfo | null>(null);
+  const [currentDoctor, setCurrentDoctor] = useState<DoctorInfo | null>(null);
 
-  // şu anki aktif hasta (login olan ya da kayıt olan kişi)
-  const [currentPatient, setCurrentPatient] =
-    useState<PatientInfo>(initialPatient);
+  const handleLoginSuccess = (
+    role: UserRole,
+    payload?: { patient?: PatientInfo; doctor?: DoctorInfo }
+  ) => {
+    setUserRole(role);
 
-  // LoginPage başarılı olunca çalışacak fonksiyon
-  const handleLogin = (type: "DOCTOR" | "PATIENT" | "ADMIN") => {
-    setUserType(type);
-
-    if (type === "DOCTOR") {
-      setDoctorView("DOCTOR_HOME");
-    } else if (type === "PATIENT") {
+    if (role === "PATIENT" && payload?.patient) {
+      setCurrentPatient(payload.patient);
       setPatientView("PATIENT_HOME");
-    } else if (type === "ADMIN") {
+    }
+
+    if (role === "DOCTOR" && payload?.doctor) {
+      setCurrentDoctor(payload.doctor);
+      setDoctorView("DOCTOR_HOME");
+    }
+
+    if (role === "ADMIN") {
       setAdminView("ADMIN_HOME");
     }
   };
 
-  // Kayıt ekranında form başarıyla dolduğunda
-  const handleRegister = (patient: PatientInfo) => {
+  const handleRegister = async (patient: PatientInfo) => {
+    // ileride: await registerPatient({ ...patient, password });
     setCurrentPatient(patient);
-    setUserType("PATIENT");
+    setUserRole("PATIENT");
     setPatientView("PATIENT_HOME");
   };
 
-  // Eğer henüz userType yoksa login / register ekranları
-  if (!userType) {
+  // === Auth flow ===
+  if (!userRole) {
     if (authView === "LOGIN") {
       return (
         <LoginPage
-          onLoginSuccess={handleLogin}
+          onLoginSuccess={handleLoginSuccess}
           onOpenRegister={() => setAuthView("REGISTER")}
         />
       );
@@ -125,17 +96,17 @@ function App() {
     return (
       <PatientRegisterPage
         onBackToLogin={() => setAuthView("LOGIN")}
-        onRegister={handleRegister}
+        onRegister={(p) => handleRegister(p)}
       />
     );
   }
 
-  // ==== DOKTOR EKRANLARI ====
-  if (userType === "DOCTOR") {
+  // === Doctor flow ===
+  if (userRole === "DOCTOR" && currentDoctor) {
     if (doctorView === "DOCTOR_HOME") {
       return (
         <DoctorDashboard
-          doctor={fakeDoctor}
+          doctor={currentDoctor}
           onOpenPastAppointments={() =>
             setDoctorView("DOCTOR_PAST_APPOINTMENTS")
           }
@@ -149,7 +120,7 @@ function App() {
     if (doctorView === "DOCTOR_PAST_APPOINTMENTS") {
       return (
         <DoctorPastAppointmentsPage
-          doctor={fakeDoctor}
+          doctor={currentDoctor}
           onBack={() => setDoctorView("DOCTOR_HOME")}
         />
       );
@@ -158,15 +129,15 @@ function App() {
     if (doctorView === "DOCTOR_FUTURE_APPOINTMENTS") {
       return (
         <DoctorFutureAppointmentsPage
-          doctor={fakeDoctor}
+          doctor={currentDoctor}
           onBack={() => setDoctorView("DOCTOR_HOME")}
         />
       );
     }
   }
 
-  // ==== HASTA EKRANLARI ====
-  if (userType === "PATIENT") {
+  // === Patient flow ===
+  if (userRole === "PATIENT" && currentPatient) {
     if (patientView === "PATIENT_HOME") {
       return (
         <PatientDashboard
@@ -211,8 +182,8 @@ function App() {
     }
   }
 
-  // ==== ADMIN EKRANLARI ====
-  if (userType === "ADMIN") {
+  // === Admin flow ===
+  if (userRole === "ADMIN") {
     if (adminView === "ADMIN_HOME") {
       return (
         <AdminDashboard
@@ -284,7 +255,6 @@ function App() {
     }
   }
 
-  // buraya normalde düşmemesi lazım ama fallback olarak kalsın
   return (
     <div style={{ padding: "24px" }}>
       <h1>MHRS Frontend</h1>

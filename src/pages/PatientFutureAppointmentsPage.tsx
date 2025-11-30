@@ -1,50 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { PatientInfo, PatientFutureAppointment } from "../types/domain";
+import { getFutureAppointments, cancelAppointment } from "../services/patientService";
+import PageContainer from "../components/layout/PageContainer";
+import BackButton from "../components/common/BackButton";
 
-type PatientFutureAppointmentsPageProps = {
-  patient: {
-    firstName: string;
-    lastName: string;
-    nationalId: string;
-  };
+type Props = {
+  patient: PatientInfo;
   onBack: () => void;
 };
-// bilgilerin nasıl tutlduğu
-type PatientFutureAppointment = {
-  id: number;
-  dateTime: string;
-  doctorName: string;
-  hospitalName: string;
-  departmentName: string;
-  isCancelled: boolean;
-};
-// örnek veriler
-const mockFutureAppointments: PatientFutureAppointment[] = [
-  {
-    id: 1,
-    dateTime: "2025-12-01 09:30",
-    doctorName: "Dr. Ahmet Yılmaz",
-    hospitalName: "Ankara Şehir Hastanesi",
-    departmentName: "Kardiyoloji",
-    isCancelled: false,
-  },
-  {
-    id: 2,
-    dateTime: "2025-12-03 11:00",
-    doctorName: "Dr. Elif Demir",
-    hospitalName: "Ankara Eğitim ve Araştırma",
-    departmentName: "Dahiliye",
-    isCancelled: false,
-  },
-];
-// geri gidebilir görebilir ya da iptal edebilir randevuları burdan
-const PatientFutureAppointmentsPage: React.FC<PatientFutureAppointmentsPageProps> = ({
-  patient,
-  onBack,
-}) => {
-  const [appointments, setAppointments] =
-    useState<PatientFutureAppointment[]>(mockFutureAppointments);
 
-  const handleCancel = (id: number) => {
+const PatientFutureAppointmentsPage: React.FC<Props> = ({ patient, onBack }) => {
+  const [appointments, setAppointments] = useState<PatientFutureAppointment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getFutureAppointments(patient.nationalId)
+      .then(setAppointments)
+      .finally(() => setLoading(false));
+  }, [patient.nationalId]);
+
+  const handleCancel = async (id: number) => {
+    await cancelAppointment(id);
     setAppointments((prev) =>
       prev.map((appt) =>
         appt.id === id ? { ...appt, isCancelled: true } : appt
@@ -53,27 +29,8 @@ const PatientFutureAppointmentsPage: React.FC<PatientFutureAppointmentsPageProps
   };
 
   return (
-    <div style={{ padding: "24px", maxWidth: "700px", margin: "24px auto" }}>
-      <button
-        onClick={onBack}
-        style={{
-          background: "#e9ecef",
-          border: "1px solid #ccc",
-          borderRadius: "20px",
-          padding: "6px 14px",
-          cursor: "pointer",
-          fontSize: "14px",
-          fontWeight: 500,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          marginBottom: "16px",
-        }}
-      >
-        <span style={{ fontSize: "16px" }}>←</span>
-        <span>Geri</span>
-      </button>
-
+    <PageContainer>
+      <BackButton onClick={onBack} />
       <h2>
         Gelecek Randevularım - {patient.firstName} {patient.lastName}
       </h2>
@@ -82,11 +39,15 @@ const PatientFutureAppointmentsPage: React.FC<PatientFutureAppointmentsPageProps
         edebilirsiniz.
       </p>
 
-      {appointments.length === 0 ? (
+      {loading && <p>Yükleniyor...</p>}
+
+      {!loading && appointments.length === 0 && (
         <p style={{ color: "#666" }}>
           İleri tarihte randevunuz bulunmamaktadır.
         </p>
-        ) : (
+      )}
+
+      {!loading &&
         appointments.map((appt) => {
           const fadedStyle = appt.isCancelled
             ? { opacity: 0.5, backgroundColor: "#f5f5f5" }
@@ -103,11 +64,10 @@ const PatientFutureAppointmentsPage: React.FC<PatientFutureAppointmentsPageProps
                 backgroundColor: "#fafafa",
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center", // X bloğunu dikey ortalar
+                alignItems: "center",
                 ...fadedStyle,
               }}
             >
-              {/* Sol taraf: randevu bilgileri */}
               <div>
                 <p style={{ margin: 0 }}>
                   <strong>Tarih / Saat:</strong> {appt.dateTime}
@@ -127,7 +87,6 @@ const PatientFutureAppointmentsPage: React.FC<PatientFutureAppointmentsPageProps
                 )}
               </div>
 
-              {/* Sağ taraf: X + İptal Et */}
               {!appt.isCancelled && (
                 <div
                   style={{
@@ -159,10 +118,8 @@ const PatientFutureAppointmentsPage: React.FC<PatientFutureAppointmentsPageProps
               )}
             </div>
           );
-        })
-      )}
-
-    </div>
+        })}
+    </PageContainer>
   );
 };
 

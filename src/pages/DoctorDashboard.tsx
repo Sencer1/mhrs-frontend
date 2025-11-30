@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PageContainer from "../components/layout/PageContainer";
 
 type DoctorInfo = {
   firstName: string;
@@ -7,146 +8,135 @@ type DoctorInfo = {
   hospitalName: string;
   departmentName: string;
 };
-//doktor bilgileri ve geçmiş geleecek randuvlar için
+
 type DoctorDashboardProps = {
   doctor: DoctorInfo;
   onOpenPastAppointments: () => void;
   onOpenFutureAppointments: () => void;
 };
 
-// giiriş yapan doktorun bilgilerini gösterecek burası
-const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctor, onOpenPastAppointments, onOpenFutureAppointments }) => {
+const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
+  doctor,
+  onOpenPastAppointments,
+  onOpenFutureAppointments,
+}) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showAppointmentsMenu, setShowAppointmentsMenu] = useState(false);
 
-// bilgilerim ksımı için burası
-  const handleBilgilerimClick = () => {
-    setShowInfo((prev) => !prev); // açık ise kapat, kapalı ise aç
-  };
-// randular sekmesine tıklanınca
-  const handleRandevularimClick = () => {
-  setShowAppointmentsMenu((prev) => !prev);
-};
-
-
   return (
-    <div style={{ padding: "24px", maxWidth: "600px", margin: "24px auto" }}>
-
-        {/* Hoş geldiniz yazısı */}
-        <h1 style={{ marginBottom: "16px" }}>
+    <PageContainer maxWidth={600}>
+      <h1 style={{ marginBottom: "16px" }}>
         Hoş geldiniz, Dr. {doctor.firstName} {doctor.lastName}
-        </h1>
+      </h1>
 
-        {/* Bilgilerim kutusu */}
-        <div
-        onClick={handleBilgilerimClick}
-        style={{
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            padding: "12px 16px",
-            marginBottom: "8px",
-            cursor: "pointer",
-            backgroundColor: "#f5f5f5",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "16px",
-            fontWeight: "700",
-        }}
-        >
-        <span>Bilgilerim</span>
-        <span style={{
-            fontSize: "16px",
-            fontWeight: "700",
-            display:"flex",
-            alignItems:"center",
-        }}>
-            {showInfo ? "▲" : "▼"}
-        </span>
-        </div>
+      <ToggleCard
+        title="Bilgilerim"
+        isOpen={showInfo}
+        onToggle={() => setShowInfo((prev) => !prev)}
+      >
+        <p>
+          <strong>İsim:</strong> {doctor.firstName}
+        </p>
+        <p>
+          <strong>Soyisim:</strong> {doctor.lastName}
+        </p>
+        <p>
+          <strong>T.C. Numarası:</strong> {doctor.nationalId}
+        </p>
+        <p>
+          <strong>Çalıştığı Hastane:</strong> {doctor.hospitalName}
+        </p>
+        <p>
+          <strong>Departman:</strong> {doctor.departmentName}
+        </p>
+      </ToggleCard>
 
-        {/* Bilgilerim paneli (açılır/kapanır) */}
-        {showInfo && (
-        <div
-            style={{
-            border: "1px solid #eee",
-            borderRadius: "8px",
-            padding: "12px 16px",
-            marginBottom: "16px",
-            }}
-        >
-            <p><strong>İsim:</strong> {doctor.firstName}</p>
-            <p><strong>Soyisim:</strong> {doctor.lastName}</p>
-            <p><strong>T.C. Numarası:</strong> {doctor.nationalId}</p>
-            <p><strong>Çalıştığı Hastane:</strong> {doctor.hospitalName}</p>
-            <p><strong>Departman:</strong> {doctor.departmentName}</p>
-        </div>
-        )}
-
-        {/* Randevularım kutusu */}
-        <div
-        onClick={handleRandevularimClick}
-        style={{
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            padding: "12px 16px",
-            cursor: "pointer",
-            backgroundColor: "#f5f5f5",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "16px",
-            fontWeight: "700",
-            color: "#000",
-            opacity: showAppointmentsMenu ? 0.8 : 1,
-            transition: "0.2s",
-        }}
-        >
-        <span>Randevularım</span>
-        <span style={{
-            fontSize: "16px",
-            fontWeight:"700",
-            display:"flex",
-            alignItems:"center",
-        }}>
-            {showAppointmentsMenu ? "▲" : "▼"}
-        </span>
-        </div>
-
-        {/* Randevularım paneli (açılır/kapanır) */}
-        {showAppointmentsMenu && (
-        <div style={{ marginTop: "8px" }}>
-            <div
-            onClick={onOpenPastAppointments}
-            style={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                padding: "10px 14px",
-                marginBottom: "8px",
-                cursor: "pointer",
-                backgroundColor: "#fafafa",
-            }}
-            >
-            Geçmiş Randevularım
-            </div>
-            <div
-            onClick={onOpenFutureAppointments}
-            style={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                padding: "10px 14px",
-                cursor: "pointer",
-                backgroundColor: "#fafafa",
-            }}
-            >
-            Gelecek Randevularım
-            </div>
-        </div>
-        )}
-
-    </div>
-    );
-
+      <ToggleCard
+        title="Randevularım"
+        isOpen={showAppointmentsMenu}
+        onToggle={() => setShowAppointmentsMenu((prev) => !prev)}
+      >
+        <MenuItem onClick={onOpenPastAppointments}>
+          Geçmiş Randevularım
+        </MenuItem>
+        <MenuItem onClick={onOpenFutureAppointments}>
+          Gelecek Randevularım
+        </MenuItem>
+      </ToggleCard>
+    </PageContainer>
+  );
 };
+
+type ToggleCardProps = {
+  title: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+};
+
+const ToggleCard: React.FC<ToggleCardProps> = ({
+  title,
+  isOpen,
+  onToggle,
+  children,
+}) => (
+  <div style={{ marginBottom: "12px" }}>
+    <div
+      onClick={onToggle}
+      style={{
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        padding: "12px 16px",
+        cursor: "pointer",
+        backgroundColor: "#f5f5f5",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        fontSize: "16px",
+        fontWeight: 700,
+      }}
+    >
+      <span>{title}</span>
+      <span style={{ fontSize: "16px", fontWeight: 700 }}>
+        {isOpen ? "▲" : "▼"}
+      </span>
+    </div>
+
+    {isOpen && (
+      <div
+        style={{
+          border: "1px solid #eee",
+          borderRadius: "8px",
+          padding: "12px 16px",
+          marginTop: "4px",
+          backgroundColor: "#fafafa",
+        }}
+      >
+        {children}
+      </div>
+    )}
+  </div>
+);
+
+type MenuItemProps = {
+  onClick: () => void;
+  children: React.ReactNode;
+};
+
+const MenuItem: React.FC<MenuItemProps> = ({ onClick, children }) => (
+  <div
+    onClick={onClick}
+    style={{
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      padding: "10px 14px",
+      marginBottom: "8px",
+      cursor: "pointer",
+      backgroundColor: "#ffffff",
+    }}
+  >
+    {children}
+  </div>
+);
 
 export default DoctorDashboard;

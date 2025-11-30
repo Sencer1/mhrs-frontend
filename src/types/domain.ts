@@ -1,0 +1,126 @@
+export type UserRole = "DOCTOR" | "PATIENT" | "ADMIN";
+
+export interface PatientInfo {
+  firstName: string;
+  lastName: string;
+  nationalId: string; // T.C. Kimlik
+  bloodGroup: string;
+  heightCm: number;
+  weightKg: number;
+}
+
+export interface DoctorInfo {
+  firstName: string;
+  lastName: string;
+  nationalId: string;
+  hospitalName: string;
+  departmentName: string;
+}
+
+export interface AppointmentBase {
+  id: number;
+  dateTime: string; // ISO datetime string when you switch to backend
+  doctorName: string;
+  hospitalName: string;
+  departmentName: string;
+}
+
+export interface PatientPastAppointment extends AppointmentBase {
+  prescriptionText: string;
+}
+
+export interface PatientFutureAppointment extends AppointmentBase {
+  isCancelled: boolean;
+}
+
+export interface DoctorPastAppointment {
+  id: number;
+  dateTime: string;
+  patientFirstName: string;
+  patientLastName: string;
+  prescriptionText: string;
+}
+
+export interface DoctorFutureAppointment {
+  id: number;
+  dateTime: string; // "2025-12-01T09:30:00"
+  patientFirstName: string;
+  patientLastName: string;
+  isCancelled: boolean;
+}
+
+// Admin tarafı için temel tipler
+
+export interface AdminHospital {
+  id: string;
+  name: string;
+  city: string;
+}
+
+export interface AdminDepartment {
+  id: string;
+  name: string;
+  hospitalId: string;
+}
+
+export interface AdminDoctor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  nationalId: string;
+  hospitalId: string;
+  departmentId: string;
+}
+
+export interface AdminPatient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  nationalId: string;
+  bloodGroup: string;
+  heightCm: number;
+  weightKg: number;
+}
+
+export type AdminAppointmentStatus = "PAST" | "FUTURE";
+
+export interface AdminAppointment {
+  id: number;
+  dateTime: string;
+  hospitalName: string;
+  departmentName: string;
+  doctorName: string;
+  patientName: string;
+  patientNationalId: string;
+  status: AdminAppointmentStatus;
+  prescriptionText?: string;
+}
+
+export interface AdminPrescription {
+  id: string;
+  date: string; // ISO date string: "2025-11-29"
+  patientName: string;
+  doctorName: string;
+  hospitalName: string;
+  departmentName: string;
+  medicines: string[]; // ilaç isimleri
+}
+
+export interface AdminWaitingItem {
+  id: string;
+  patientName: string;
+  patientNationalId: string;
+  doctorName: string;
+  hospitalName: string;
+  departmentName: string;
+  requestedDateTime: string; // "2025-12-01 09:30"
+}
+
+export interface AdminUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  nationalId: string;
+}

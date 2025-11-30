@@ -1,5 +1,7 @@
 import React from "react";
+import PageContainer from "../components/layout/PageContainer";
 
+// Admin’in hangi ekrana gideceğini üst komponent (App.tsx) yönetiyor
 type AdminDashboardProps = {
   onOpenHospitals: () => void;
   onOpenDoctors: () => void;
@@ -10,7 +12,7 @@ type AdminDashboardProps = {
   onOpenAdmins: () => void;
 };
 
-// Şimdilik sahte istatistikler (mock)
+// Şimdilik mock istatistikler, backend geldiğinde servis katmanına taşınır
 const mockStats = {
   totalHospitals: 5,
   totalDepartments: 18,
@@ -31,7 +33,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenAdmins,
 }) => {
   return (
-    <div style={{ padding: "24px", maxWidth: "1100px", margin: "24px auto" }}>
+    <PageContainer>
       <h1 style={{ marginBottom: "8px" }}>Admin Paneli</h1>
       <p style={{ marginBottom: "24px", color: "#555" }}>
         Sistem genel durumunu buradan görebilir; hastane, departman, doktor,
@@ -63,7 +65,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         />
       </div>
 
-      {/* Yönetim bölümleri */}
+      {/* Yönetim menüsü */}
       <h2 style={{ marginBottom: "16px" }}>Yönetim Menüsü</h2>
       <div
         style={{
@@ -84,22 +86,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         />
         <MenuCard
           title="Randevu Kayıt Defteri"
-          description="Geçmiş ve gelecek randevuları filtreleyerek görüntüleyin, gerekli durumlarda randevuları iptal edin."
+          description="Geçmiş ve gelecek randevuları filtreleyerek görüntüleyin."
           onClick={onOpenAppointments}
         />
         <MenuCard
           title="Hasta Yönetimi"
-          description="Tüm hastaların temel bilgilerini görüntüleyin, gerekirse yeni hasta kaydı oluşturun."
+          description="Tüm hastaların temel bilgilerini görüntüleyin, gerektiğinde yeni hasta kaydı oluşturun."
           onClick={onOpenPatients}
         />
         <MenuCard
           title="Reçete / İlaç Kayıtları"
-          description="Yazılmış reçeteleri; hasta, doktor veya ilaç adına göre inceleyin ve yönetimini yapın."
+          description="Yazılmış reçeteleri hasta, doktor veya ilaç adına göre inceleyin."
           onClick={onOpenPrescriptions}
         />
         <MenuCard
           title="Bekleme Listesi"
-          description="Doktorların bekleme listesinde bulunan hastaları görüntüleyin, gerekirse listeden çıkarın."
+          description="Doktorların bekleme listesinde bulunan hastaları görüntüleyin."
           onClick={onOpenWaitingList}
         />
         <MenuCard
@@ -108,7 +110,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onClick={onOpenAdmins}
         />
       </div>
-    </div>
+    </PageContainer>
   );
 };
 
@@ -117,23 +119,21 @@ type StatCardProps = {
   value: number;
 };
 
-const StatCard: React.FC<StatCardProps> = ({ title, value }) => {
-  return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: "10px",
-        padding: "12px 16px",
-        backgroundColor: "#f8f9fa",
-      }}
-    >
-      <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
-        {title}
-      </div>
-      <div style={{ fontSize: "22px", fontWeight: 700 }}>{value}</div>
+const StatCard: React.FC<StatCardProps> = ({ title, value }) => (
+  <div
+    style={{
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      padding: "12px 16px",
+      backgroundColor: "#f8f9fa",
+    }}
+  >
+    <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
+      {title}
     </div>
-  );
-};
+    <div style={{ fontSize: "22px", fontWeight: 700 }}>{value}</div>
+  </div>
+);
 
 type MenuCardProps = {
   title: string;
@@ -141,49 +141,40 @@ type MenuCardProps = {
   onClick: () => void;
 };
 
-const MenuCard: React.FC<MenuCardProps> = ({
-  title,
-  description,
-  onClick,
-}) => {
-  return (
-    <div
+const MenuCard: React.FC<MenuCardProps> = ({ title, description, onClick }) => (
+  <div
+    style={{
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      padding: "16px",
+      backgroundColor: "#ffffff",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+    }}
+  >
+    <div>
+      <h3 style={{ margin: 0, marginBottom: "8px" }}>{title}</h3>
+      <p style={{ margin: 0, color: "#555", fontSize: "14px" }}>{description}</p>
+    </div>
+    <button
+      onClick={onClick}
       style={{
-        border: "1px solid #ddd",
-        borderRadius: "10px",
-        padding: "16px",
-        backgroundColor: "#ffffff",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
+        marginTop: "12px",
+        alignSelf: "flex-start",
+        padding: "6px 12px",
+        borderRadius: "8px",
+        border: "none",
+        backgroundColor: "#0d6efd",
+        color: "white",
+        cursor: "pointer",
+        fontSize: "14px",
       }}
     >
-      <div>
-        <h3 style={{ margin: 0, marginBottom: "8px" }}>{title}</h3>
-        <p style={{ margin: 0, color: "#555", fontSize: "14px" }}>
-          {description}
-        </p>
-      </div>
-      <button
-        onClick={onClick}
-        style={{
-          marginTop: "12px",
-          alignSelf: "flex-start",
-          padding: "6px 12px",
-          borderRadius: "6px",
-          border: "1px solid #1976d2",
-          backgroundColor: "#1976d2",
-          color: "#fff",
-          cursor: "pointer",
-          fontSize: "14px",
-          fontWeight: 500,
-        }}
-      >
-        Aç
-      </button>
-    </div>
-  );
-};
+      Yönetim ekranına git
+    </button>
+  </div>
+);
 
 export default AdminDashboard;

@@ -1,49 +1,38 @@
 import React, { useState } from "react";
+import { UserRole, PatientInfo, DoctorInfo } from "../types/domain";
+import { loginMock } from "../services/authService";
 
 type LoginPageProps = {
-  onLoginSuccess: (userType: "DOCTOR" | "PATIENT" | "ADMIN") => void;
+  onLoginSuccess: (role: UserRole, payload?: { patient?: PatientInfo; doctor?: DoctorInfo }) => void;
   onOpenRegister: () => void;
 };
 
-// ŞİMDİLİK: Doğru kabul edeceğimiz SAHTE bilgiler
-// backend geldiğinde burası tamamen değişecek
-const DOCTOR_TC = "1";
-const PATIENT_TC = "2";
-const ADMIN_TC = "9"; // admin için sahte TC
-const CORRECT_PASSWORD = "1234"; // doktor ve hasta için şifre
-const ADMIN_PASSWORD = "admin"; // admin için farklı şifre
-
-const LoginPage: React.FC<LoginPageProps> = ({
-  onLoginSuccess,
-  onOpenRegister,
-}) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenRegister }) => {
   const [nationalId, setNationalId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setLoading(true);
 
-    // 1) Admin girişi
-    if (nationalId === ADMIN_TC && password === ADMIN_PASSWORD) {
-      onLoginSuccess("ADMIN");
-      return;
+    try {
+      const result = await loginMock(nationalId, password);
+
+      if (result.role === "ADMIN") {
+        onLoginSuccess("ADMIN");
+      } else if (result.role === "DOCTOR") {
+        onLoginSuccess("DOCTOR", { doctor: result.doctor });
+      } else if (result.role === "PATIENT") {
+        onLoginSuccess("PATIENT", { patient: result.patient });
+      }
+    } catch (e) {
+      setError("Bilgileriniz yanlış, lütfen tekrar deneyiniz.");
+    } finally {
+      setLoading(false);
     }
-
-    // 2) Doktor girişi
-    if (nationalId === DOCTOR_TC && password === CORRECT_PASSWORD) {
-      onLoginSuccess("DOCTOR");
-      return;
-    }
-
-    // 3) Hasta girişi (sabit test hastası)
-    if (nationalId === PATIENT_TC && password === CORRECT_PASSWORD) {
-      onLoginSuccess("PATIENT");
-      return;
-    }
-
-    setError("Bilgileriniz yanlış, lütfen tekrar deneyiniz.");
   };
 
   return (
@@ -101,12 +90,11 @@ const LoginPage: React.FC<LoginPageProps> = ({
           </label>
         </div>
 
-        {error && (
-          <p style={{ color: "red", marginBottom: "12px" }}>{error}</p>
-        )}
+        {error && <p style={{ color: "red", marginBottom: "12px" }}>{error}</p>}
 
         <button
           type="submit"
+          disabled={loading}
           style={{
             width: "100%",
             padding: "10px",
@@ -116,13 +104,13 @@ const LoginPage: React.FC<LoginPageProps> = ({
             borderRadius: "4px",
             cursor: "pointer",
             fontSize: "14px",
+            opacity: loading ? 0.7 : 1,
           }}
         >
-          Giriş Yap
+          {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
         </button>
       </form>
 
-      {/* Kayıt ol kısmı */}
       <div
         style={{
           marginTop: "16px",
