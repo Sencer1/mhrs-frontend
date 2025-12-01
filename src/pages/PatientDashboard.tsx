@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PatientInfo } from "../types/domain";
+import { getPatientInfo } from "../services/patientService";
 import PageContainer from "../components/layout/PageContainer";
 
 type PatientDashboardProps = {
-  patient: PatientInfo;
+  patient: PatientInfo; // login olurken gelen temel bilgi
   onOpenNewAppointment: () => void;
   onOpenPastAppointments: () => void;
   onOpenFutureAppointments: () => void;
@@ -15,12 +16,32 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
   onOpenPastAppointments,
   onOpenFutureAppointments,
 }) => {
-  const [showInfo, setShowInfo] = useState(false);
+  // Bilgi paneli açık mı kapalı mı?
+  const [showInfo, setShowInfo] = useState<boolean>(false);
+
+  // Backend’den gelen güncel hasta bilgisi
+  const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Sayfa açıldığında backend'den hasta bilgisi çek
+  useEffect(() => {
+    getPatientInfo(patient.nationalId)
+      .then((data) => setPatientInfo(data))
+      .catch((err) => {
+        console.error("getPatientInfo error:", err);
+        // backend patlarsa en azından props'tan gelen bilgiyi göster
+        setPatientInfo(patient);
+      })
+      .finally(() => setLoading(false));
+  }, [patient.nationalId, patient]);
+
+  // Gösterilecek kaynağı belirle (backend varsa onu, yoksa props)
+  const info = patientInfo ?? patient;
 
   return (
     <PageContainer maxWidth={600}>
       <h1 style={{ marginBottom: "16px" }}>
-        Hoş geldiniz, {patient.firstName} {patient.lastName}
+        Hoş geldiniz, {info.firstName} {info.lastName}
       </h1>
 
       <div
@@ -54,24 +75,30 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
             marginBottom: "16px",
           }}
         >
-          <p>
-            <strong>İsim:</strong> {patient.firstName}
-          </p>
-          <p>
-            <strong>Soyisim:</strong> {patient.lastName}
-          </p>
-          <p>
-            <strong>T.C. Numarası:</strong> {patient.nationalId}
-          </p>
-          <p>
-            <strong>Kan Grubu:</strong> {patient.bloodGroup}
-          </p>
-          <p>
-            <strong>Boy:</strong> {patient.heightCm} cm
-          </p>
-          <p>
-            <strong>Kilo:</strong> {patient.weightKg} kg
-          </p>
+          {loading ? (
+            <p>Yükleniyor...</p>
+          ) : (
+            <>
+              <p>
+                <strong>İsim:</strong> {info.firstName}
+              </p>
+              <p>
+                <strong>Soyisim:</strong> {info.lastName}
+              </p>
+              <p>
+                <strong>T.C. Numarası:</strong> {info.nationalId}
+              </p>
+              <p>
+                <strong>Kan Grubu:</strong> {info.bloodGroup}
+              </p>
+              <p>
+                <strong>Boy:</strong> {info.heightCm} cm
+              </p>
+              <p>
+                <strong>Kilo:</strong> {info.weightKg} kg
+              </p>
+            </>
+          )}
         </div>
       )}
 

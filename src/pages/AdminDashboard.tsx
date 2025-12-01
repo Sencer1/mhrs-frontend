@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PageContainer from "../components/layout/PageContainer";
+import { fetchAdminDashboardSummary } from "../services/adminService";
+import { AdminDashboardSummary } from "../types/domain";
 
-// Admin’in hangi ekrana gideceğini üst komponent (App.tsx) yönetiyor
 type AdminDashboardProps = {
   onOpenHospitals: () => void;
   onOpenDoctors: () => void;
@@ -10,17 +11,6 @@ type AdminDashboardProps = {
   onOpenPrescriptions: () => void;
   onOpenWaitingList: () => void;
   onOpenAdmins: () => void;
-};
-
-// Şimdilik mock istatistikler, backend geldiğinde servis katmanına taşınır
-const mockStats = {
-  totalHospitals: 5,
-  totalDepartments: 18,
-  totalDoctors: 42,
-  totalPatients: 1200,
-  totalAppointments: 3500,
-  totalActiveAppointments: 120,
-  totalWaitingList: 15,
 };
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -32,6 +22,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenWaitingList,
   onOpenAdmins,
 }) => {
+  // Backend’den gelecek veriyi state’e koyuyoruz
+  const [summary, setSummary] = useState<AdminDashboardSummary | null>(null);
+  const [loading, setLoading] =  useState(true);
+
+   useEffect(() => {
+    fetchAdminDashboardSummary()
+      .then((data) => setSummary(data))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <PageContainer>
       <h1 style={{ marginBottom: "8px" }}>Admin Paneli</h1>
@@ -50,18 +50,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           marginBottom: "32px",
         }}
       >
-        <StatCard title="Toplam Hastane" value={mockStats.totalHospitals} />
-        <StatCard title="Toplam Departman" value={mockStats.totalDepartments} />
-        <StatCard title="Toplam Doktor" value={mockStats.totalDoctors} />
-        <StatCard title="Toplam Hasta" value={mockStats.totalPatients} />
-        <StatCard title="Toplam Randevu" value={mockStats.totalAppointments} />
+        <StatCard
+          title="Toplam Hastane"
+          value={summary?.totalHospitals ?? 0}
+          loading={loading}
+        />
+        <StatCard
+          title="Toplam Departman"
+          value={summary?.totalDepartments ?? 0}
+          loading={loading}
+        />
+        <StatCard
+          title="Toplam Doktor"
+          value={summary?.totalDoctors ?? 0}
+          loading={loading}
+        />
+        <StatCard
+          title="Toplam Hasta"
+          value={summary?.totalPatients ?? 0}
+          loading={loading}
+        />
+        <StatCard
+          title="Toplam Randevu"
+          value={summary?.totalAppointments ?? 0}
+          loading={loading}
+        />
         <StatCard
           title="Aktif Randevu"
-          value={mockStats.totalActiveAppointments}
+          value={summary?.totalActiveAppointments ?? 0}
+          loading={loading}
         />
         <StatCard
           title="Bekleme Listesindeki Hasta"
-          value={mockStats.totalWaitingList}
+          value={summary?.totalWaitingList ?? 0}
+          loading={loading}
         />
       </div>
 
@@ -76,37 +98,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       >
         <MenuCard
           title="Hastane / Departman Yönetimi"
-          description="Hastane ekleme / silme, hastane içindeki departmanları ekleme / kaldırma işlemlerini yönetin."
+          description="Hastane ekleme / silme, departman yönetimi."
           onClick={onOpenHospitals}
         />
         <MenuCard
           title="Doktor Yönetimi"
-          description="Doktor ekleme / silme, doktorların hangi hastane ve departmanda çalıştığını yönetin."
+          description="Doktor ekleme / silme, atama işlemleri."
           onClick={onOpenDoctors}
         />
         <MenuCard
           title="Randevu Kayıt Defteri"
-          description="Geçmiş ve gelecek randevuları filtreleyerek görüntüleyin."
+          description="Geçmiş ve gelecek randevuları görüntüleyin."
           onClick={onOpenAppointments}
         />
         <MenuCard
           title="Hasta Yönetimi"
-          description="Tüm hastaların temel bilgilerini görüntüleyin, gerektiğinde yeni hasta kaydı oluşturun."
+          description="Hasta bilgilerini ve kayıtlarını yönetin."
           onClick={onOpenPatients}
         />
         <MenuCard
           title="Reçete / İlaç Kayıtları"
-          description="Yazılmış reçeteleri hasta, doktor veya ilaç adına göre inceleyin."
+          description="Reçeteleri inceleyin."
           onClick={onOpenPrescriptions}
         />
         <MenuCard
           title="Bekleme Listesi"
-          description="Doktorların bekleme listesinde bulunan hastaları görüntüleyin."
+          description="Bekleme listelerinde bulunan hastaları takip edin."
           onClick={onOpenWaitingList}
         />
         <MenuCard
           title="Admin Kullanıcıları"
-          description="Sisteme erişimi olan admin kullanıcıları görüntüleyin, yeni admin ekleyin veya kaldırın."
+          description="Admin hesaplarını yönetin."
           onClick={onOpenAdmins}
         />
       </div>
@@ -117,9 +139,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 type StatCardProps = {
   title: string;
   value: number;
+  loading?: boolean;
 };
 
-const StatCard: React.FC<StatCardProps> = ({ title, value }) => (
+const StatCard: React.FC<StatCardProps> = ({ title, value, loading }) => (
   <div
     style={{
       border: "1px solid #ddd",
@@ -131,7 +154,9 @@ const StatCard: React.FC<StatCardProps> = ({ title, value }) => (
     <div style={{ fontSize: "13px", color: "#666", marginBottom: "4px" }}>
       {title}
     </div>
-    <div style={{ fontSize: "22px", fontWeight: 700 }}>{value}</div>
+    <div style={{ fontSize: "22px", fontWeight: 700 }}>
+      {loading ? "…" : value}
+    </div>
   </div>
 );
 

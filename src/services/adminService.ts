@@ -8,6 +8,7 @@ import {
   AdminPrescription,
   AdminUser,
   AdminWaitingItem,
+  AdminDashboardSummary
 } from "../types/domain";
 
 // --- MOCK DATA (eski admin sayfalarından taşındı) ---
@@ -199,6 +200,11 @@ export async function fetchAdminHospitals(): Promise<AdminHospital[]> {
   // const { data } = await http.get<AdminHospital[]>("/admin/hospitals");
   // return data;
   return mockHospitals;
+}
+
+export async function fetchAdminDashboardSummary(): Promise<AdminDashboardSummary> {
+  const { data } = await http.get<AdminDashboardSummary>("/admin/dashboardSummary");
+  return data;
 }
 
 export async function fetchAdminDepartments(): Promise<AdminDepartment[]> {

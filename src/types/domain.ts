@@ -124,3 +124,14 @@ export interface AdminUser {
   email: string;
   nationalId: string;
 }
+
+export type AdminDashboardSummary = {
+  totalHospitals: number;
+  totalDepartments: number;
+  totalDoctors: number;
+  totalPatients: number;
+  totalAppointments: number;
+  totalActiveAppointments: number;
+  totalWaitingList: number;
+};
+
