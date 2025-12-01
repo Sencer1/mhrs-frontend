@@ -19,10 +19,10 @@ const PatientPastAppointmentsPage: React.FC<
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getPastAppointments(patient.nationalId)
+    getPastAppointments()
       .then(setAppointments)
       .finally(() => setLoading(false));
-  }, [patient.nationalId]);
+  }, []);
 
   return (
     <PageContainer maxWidth={720}>
@@ -57,10 +57,10 @@ const PatientPastAppointmentsPage: React.FC<
             }}
           >
             <p>
-              <strong>Tarih / Saat:</strong> {appt.dateTime}
+              <strong>Tarih / Saat:</strong> {appt.slotDateTime}
             </p>
             <p>
-              <strong>Doktor:</strong> {appt.doctorName}
+              <strong>Doktor:</strong> {appt.doctorFirstName} {appt.doctorLastName}
             </p>
             <p>
               <strong>Hastane:</strong> {appt.hospitalName}

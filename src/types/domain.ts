@@ -19,18 +19,20 @@ export interface DoctorInfo {
 
 export interface AppointmentBase {
   id: number;
-  dateTime: string; // ISO datetime string when you switch to backend
-  doctorName: string;
+  slotDateTime: string;  // ✔ DTO ile birebir uyumlu
+  doctorFirstName: string;  // ✔
+  doctorLastName: string;   // ✔
   hospitalName: string;
   departmentName: string;
 }
 
+
 export interface PatientPastAppointment extends AppointmentBase {
-  prescriptionText: string;
+  prescriptionText: string | null;
 }
 
 export interface PatientFutureAppointment extends AppointmentBase {
-  isCancelled: boolean;
+  status: string;
 }
 
 export interface DoctorPastAppointment {
@@ -46,7 +48,7 @@ export interface DoctorFutureAppointment {
   dateTime: string; // "2025-12-01T09:30:00"
   patientFirstName: string;
   patientLastName: string;
-  isCancelled: boolean;
+  status: string;
 }
 
 // Admin tarafı için temel tipler

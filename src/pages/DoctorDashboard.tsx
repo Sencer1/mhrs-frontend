@@ -1,16 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PageContainer from "../components/layout/PageContainer";
-
-type DoctorInfo = {
-  firstName: string;
-  lastName: string;
-  nationalId: string;
-  hospitalName: string;
-  departmentName: string;
-};
+import { DoctorInfo } from "../types/domain";
+import { getDoctorInfo } from "../services/doctorService";
 
 type DoctorDashboardProps = {
-  doctor: DoctorInfo;
+  doctor: DoctorInfo; // login'den gelen temel bilgi (fallback)
   onOpenPastAppointments: () => void;
   onOpenFutureAppointments: () => void;
 };
@@ -20,13 +14,56 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   onOpenPastAppointments,
   onOpenFutureAppointments,
 }) => {
-  const [showInfo, setShowInfo] = useState(false);
-  const [showAppointmentsMenu, setShowAppointmentsMenu] = useState(false);
+  const [showInfo, setShowInfo] = useState<boolean>(false);
+  const [showAppointmentsMenu, setShowAppointmentsMenu] = useState<boolean>(false);
+
+  // Backend’ten gelen güncel doktor bilgisi
+  const [doctorInfo, setDoctorInfo] = useState<DoctorInfo | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      try {
+        const data = await getDoctorInfo(); // GET /doctor/info (token'dan dokturu buluyor)
+        if (isMounted) {
+          setDoctorInfo(data);
+        }
+      } catch (err) {
+        console.error("getDoctorInfo error:", err);
+        // backend patlarsa login'den gelen prop'u kullan
+        if (isMounted) {
+          setDoctorInfo(doctor);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [doctor]);
+
+  // Gösterilecek kaynak (backend varsa onu, yoksa props)
+  const info: DoctorInfo = doctorInfo ?? doctor;
+
+  if (loading) {
+    return (
+      <PageContainer maxWidth={600}>
+        <h1>Doktor paneli</h1>
+        <p>Yükleniyor...</p>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer maxWidth={600}>
       <h1 style={{ marginBottom: "16px" }}>
-        Hoş geldiniz, Dr. {doctor.firstName} {doctor.lastName}
+        Hoş geldiniz, Dr. {info.firstName} {info.lastName}
       </h1>
 
       <ToggleCard
@@ -35,19 +72,19 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         onToggle={() => setShowInfo((prev) => !prev)}
       >
         <p>
-          <strong>İsim:</strong> {doctor.firstName}
+          <strong>İsim:</strong> {info.firstName}
         </p>
         <p>
-          <strong>Soyisim:</strong> {doctor.lastName}
+          <strong>Soyisim:</strong> {info.lastName}
         </p>
         <p>
-          <strong>T.C. Numarası:</strong> {doctor.nationalId}
+          <strong>T.C. Numarası:</strong> {info.nationalId}
         </p>
         <p>
-          <strong>Çalıştığı Hastane:</strong> {doctor.hospitalName}
+          <strong>Çalıştığı Hastane:</strong> {info.hospitalName}
         </p>
         <p>
-          <strong>Departman:</strong> {doctor.departmentName}
+          <strong>Departman:</strong> {info.departmentName}
         </p>
       </ToggleCard>
 

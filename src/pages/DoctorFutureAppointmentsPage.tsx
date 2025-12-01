@@ -16,9 +16,7 @@ type DoctorFutureAppointmentsPageProps = {
 const DoctorFutureAppointmentsPage: React.FC<
   DoctorFutureAppointmentsPageProps
 > = ({ doctor, onBack }) => {
-  const [appointments, setAppointments] = useState<DoctorFutureAppointment[]>(
-    []
-  );
+  const [appointments, setAppointments] = useState<DoctorFutureAppointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,9 +27,11 @@ const DoctorFutureAppointmentsPage: React.FC<
 
   const handleCancel = async (id: number) => {
     await cancelDoctorAppointment(id);
+
+    // Local state'de status güncelle
     setAppointments((prev) =>
       prev.map((appt) =>
-        appt.id === id ? { ...appt, isCancelled: true } : appt
+        appt.id === id ? { ...appt, status: "CANCELLED_BY_DOCTOR" } : appt
       )
     );
   };
@@ -52,9 +52,19 @@ const DoctorFutureAppointmentsPage: React.FC<
 
       {!loading &&
         appointments.map((appt) => {
-          const fadedStyle = appt.isCancelled
+          // CANCELLED ile başlayan tüm status'ler iptal kabul
+          const isCancelled = appt.status?.startsWith("CANCELLED");
+
+          const fadedStyle = isCancelled
             ? { opacity: 0.5, backgroundColor: "#f5f5f5" }
             : {};
+
+          let cancelMessage = "";
+          if (appt.status === "CANCELLED_BY_DOCTOR") {
+            cancelMessage = "Bu randevu doktor tarafından iptal edilmiştir.";
+          } else if (appt.status === "CANCELLED_BY_PATIENT") {
+            cancelMessage = "Bu randevu hasta tarafından iptal edilmiştir.";
+          }
 
           return (
             <div
@@ -79,7 +89,8 @@ const DoctorFutureAppointmentsPage: React.FC<
                 <p style={{ margin: 0 }}>
                   {appt.patientFirstName} {appt.patientLastName}
                 </p>
-                {appt.isCancelled && (
+
+                {isCancelled && cancelMessage && (
                   <p
                     style={{
                       color: "black",
@@ -87,12 +98,12 @@ const DoctorFutureAppointmentsPage: React.FC<
                       fontSize: "14px",
                     }}
                   >
-                    Bu randevu iptal edilmiştir.
+                    {cancelMessage}
                   </p>
                 )}
               </div>
 
-              {!appt.isCancelled && (
+              {!isCancelled && (
                 <div style={{ textAlign: "center", marginLeft: "12px" }}>
                   <button
                     onClick={() => handleCancel(appt.id)}

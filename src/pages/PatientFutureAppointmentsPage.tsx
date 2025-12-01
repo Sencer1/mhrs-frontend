@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { PatientInfo, PatientFutureAppointment } from "../types/domain";
-import { getFutureAppointments, cancelAppointment } from "../services/patientService";
+import {
+  PatientInfo,
+  PatientFutureAppointment,
+} from "../types/domain";
+import {
+  getFutureAppointments,
+  cancelAppointment,
+} from "../services/patientService";
 import PageContainer from "../components/layout/PageContainer";
 import BackButton from "../components/common/BackButton";
 
@@ -14,16 +20,20 @@ const PatientFutureAppointmentsPage: React.FC<Props> = ({ patient, onBack }) => 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getFutureAppointments(patient.nationalId)
+    getFutureAppointments()
       .then(setAppointments)
       .finally(() => setLoading(false));
-  }, [patient.nationalId]);
+  }, []);
 
   const handleCancel = async (id: number) => {
     await cancelAppointment(id);
+
+    // status güncelle
     setAppointments((prev) =>
       prev.map((appt) =>
-        appt.id === id ? { ...appt, isCancelled: true } : appt
+        appt.id === id
+          ? { ...appt, status: "CANCELLED_BY_PATIENT" }
+          : appt
       )
     );
   };
@@ -31,12 +41,12 @@ const PatientFutureAppointmentsPage: React.FC<Props> = ({ patient, onBack }) => 
   return (
     <PageContainer>
       <BackButton onClick={onBack} />
+
       <h2>
-        Gelecek Randevularım - {patient.firstName} {patient.lastName}
+        Gelecek Randevularım – {patient.firstName} {patient.lastName}
       </h2>
       <p style={{ marginBottom: "16px", color: "#555" }}>
-        Bu ekranda ileri tarihteki randevularınızı görüntüleyebilir ve iptal
-        edebilirsiniz.
+        Bu ekranda ileri tarihteki randevularınızı görüntüleyebilir ve iptal edebilirsiniz.
       </p>
 
       {loading && <p>Yükleniyor...</p>}
@@ -49,9 +59,18 @@ const PatientFutureAppointmentsPage: React.FC<Props> = ({ patient, onBack }) => 
 
       {!loading &&
         appointments.map((appt) => {
-          const fadedStyle = appt.isCancelled
+          const isCancelled = appt.status?.startsWith("CANCELLED");
+
+          const fadedStyle = isCancelled
             ? { opacity: 0.5, backgroundColor: "#f5f5f5" }
             : {};
+
+          let cancelMessage = "";
+          if (appt.status === "CANCELLED_BY_DOCTOR") {
+            cancelMessage = "Bu randevunuz doktor tarafından iptal edilmiştir.";
+          } else if (appt.status === "CANCELLED_BY_PATIENT") {
+            cancelMessage = "Bu randevunuz hasta tarafından iptal edilmiştir.";
+          }
 
           return (
             <div
@@ -70,24 +89,24 @@ const PatientFutureAppointmentsPage: React.FC<Props> = ({ patient, onBack }) => 
             >
               <div>
                 <p style={{ margin: 0 }}>
-                  <strong>Tarih / Saat:</strong> {appt.dateTime}
+                  <strong>Tarih / Saat:</strong> {appt.slotDateTime}
                 </p>
                 <p style={{ margin: 0 }}>
-                  <strong>Doktor:</strong> {appt.doctorName}
+                  <strong>Doktor:</strong> {appt.doctorFirstName} {appt.doctorLastName}
                 </p>
                 <p style={{ margin: 0 }}>
-                  <strong>Hastane:</strong> {appt.hospitalName} -{" "}
+                  <strong>Hastane:</strong> {appt.hospitalName} –{" "}
                   {appt.departmentName}
                 </p>
 
-                {appt.isCancelled && (
+                {isCancelled && cancelMessage && (
                   <p style={{ color: "black", marginTop: "8px" }}>
-                    Bu randevunuz iptal edilmiştir.
+                    {cancelMessage}
                   </p>
                 )}
               </div>
 
-              {!appt.isCancelled && (
+              {!isCancelled && (
                 <div
                   style={{
                     textAlign: "center",
