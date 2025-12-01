@@ -22,10 +22,10 @@ const DoctorFutureAppointmentsPage: React.FC<
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getDoctorFutureAppointments(doctor.nationalId)
+    getDoctorFutureAppointments()
       .then(setAppointments)
       .finally(() => setLoading(false));
-  }, [doctor.nationalId]);
+  }, []);
 
   const handleCancel = async (id: number) => {
     await cancelDoctorAppointment(id);
@@ -41,10 +41,10 @@ const DoctorFutureAppointmentsPage: React.FC<
       <BackButton onClick={onBack} />
 
       <h2>
-        Gelecek Randevularım - Dr. {doctor.firstName} {doctor.lastName}
+        Gelecek Randevularım — Dr. {doctor.firstName} {doctor.lastName}
       </h2>
       <p style={{ marginBottom: "16px", color: "#555" }}>
-        Bu ekranda gelecekteki randevularınızı görebilir ve isterseniz iptal
+        Bu ekranda gelecek randevularınızı görebilir ve isterseniz iptal
         edebilirsiniz.
       </p>
 
@@ -100,7 +100,7 @@ const DoctorFutureAppointmentsPage: React.FC<
                       background: "none",
                       border: "none",
                       cursor: "pointer",
-                      fontSize: "28px",
+                      fontSize: "24px",
                       fontWeight: "bold",
                       color: "black",
                       lineHeight: "24px",

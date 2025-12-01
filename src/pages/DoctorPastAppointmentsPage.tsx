@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { DoctorInfo, DoctorPastAppointment } from "../types/domain";
 import { getDoctorPastAppointments } from "../services/doctorService";
@@ -19,10 +18,10 @@ const DoctorPastAppointmentsPage: React.FC<DoctorPastAppointmentsPageProps> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getDoctorPastAppointments(doctor.nationalId)
+    getDoctorPastAppointments()
       .then(setAppointments)
       .finally(() => setLoading(false));
-  }, [doctor.nationalId]);
+  }, []);
 
   const handleCardClick = (id: number) => {
     setExpandedId((prev) => (prev === id ? null : id));

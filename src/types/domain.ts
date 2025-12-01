@@ -135,3 +135,10 @@ export type AdminDashboardSummary = {
   totalWaitingList: number;
 };
 
+export type BackendLoginResponse = {
+  token: string;
+  role: UserRole;
+  firstName: string;
+  lastName: string;
+};
+

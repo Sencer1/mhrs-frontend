@@ -1,17 +1,25 @@
 import React, { useState } from "react";
 import { UserRole, PatientInfo, DoctorInfo } from "../types/domain";
-import { loginMock } from "../services/authService";
+// MOCK yerine artık gerçek login'i kullanıyoruz
+// import { loginMock } from "../services/authService";
+import { loginReal } from "../services/authService";
 
 type LoginPageProps = {
-  onLoginSuccess: (role: UserRole, payload?: { patient?: PatientInfo; doctor?: DoctorInfo }) => void;
+  onLoginSuccess: (
+    role: UserRole,
+    payload?: { patient?: PatientInfo; doctor?: DoctorInfo }
+  ) => void;
   onOpenRegister: () => void;
 };
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenRegister }) => {
-  const [nationalId, setNationalId] = useState("");
+  const [role, setRole] = useState<UserRole>("PATIENT"); // PATIENT / DOCTOR / ADMIN
+  const [nationalIdOrUsername, setNationalIdOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isAdmin = role === "ADMIN";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -19,15 +27,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenRegister })
     setLoading(true);
 
     try {
-      const result = await loginMock(nationalId, password);
+      // GERÇEK BACKEND LOGIN
+      // PATIENT/DOCTOR için: nationalIdOrUsername = TCKN
+      // ADMIN için: nationalIdOrUsername = username (örn. "admin")
+      const result = await loginReal(role, nationalIdOrUsername, password);
 
-      if (result.role === "ADMIN") {
-        onLoginSuccess("ADMIN");
-      } else if (result.role === "DOCTOR") {
-        onLoginSuccess("DOCTOR", { doctor: result.doctor });
-      } else if (result.role === "PATIENT") {
-        onLoginSuccess("PATIENT", { patient: result.patient });
-      }
+      // loginReal zaten:
+      // - token'ı localStorage'a yazıyor
+      // - Authorization header'ı httpClient'a ekliyor
+
+      // Bu aşamada patient/doctor detaylarını login sırasında almıyoruz,
+      // onlar için /patient/info veya /doctor/info çağrısı yaparsın.
+      onLoginSuccess(result.role);
     } catch (e) {
       setError("Bilgileriniz yanlış, lütfen tekrar deneyiniz.");
     } finally {
@@ -50,17 +61,35 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onOpenRegister })
         Randevu Alma Sistemine Hoş Geldiniz
       </h1>
       <p style={{ textAlign: "center", marginBottom: "24px", color: "#555" }}>
-        Lütfen kimlik numaranız ve şifreniz ile giriş yapınız.
+        Lütfen {isAdmin ? "kullanıcı adınız" : "kimlik numaranız"} ve şifreniz ile giriş yapınız.
       </p>
+
+      {/* Rol seçimi */}
+      <div style={{ marginBottom: "16px" }}>
+        <label style={{ display: "block", marginBottom: "4px" }}>Rolünüzü seçiniz:</label>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value as UserRole)}
+          style={{
+            width: "100%",
+            padding: "8px",
+            boxSizing: "border-box",
+          }}
+        >
+          <option value="PATIENT">Hasta</option>
+          <option value="DOCTOR">Doktor</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "16px" }}>
           <label>
-            Kimlik numarasını giriniz:
+            {isAdmin ? "Kullanıcı adınızı giriniz:" : "Kimlik numaranızı giriniz:"}
             <input
               type="text"
-              value={nationalId}
-              onChange={(e) => setNationalId(e.target.value)}
+              value={nationalIdOrUsername}
+              onChange={(e) => setNationalIdOrUsername(e.target.value)}
               style={{
                 display: "block",
                 width: "100%",

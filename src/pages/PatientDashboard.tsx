@@ -4,14 +4,12 @@ import { getPatientInfo } from "../services/patientService";
 import PageContainer from "../components/layout/PageContainer";
 
 type PatientDashboardProps = {
-  patient: PatientInfo; // login olurken gelen temel bilgi
   onOpenNewAppointment: () => void;
   onOpenPastAppointments: () => void;
   onOpenFutureAppointments: () => void;
 };
 
 const PatientDashboard: React.FC<PatientDashboardProps> = ({
-  patient,
   onOpenNewAppointment,
   onOpenPastAppointments,
   onOpenFutureAppointments,
@@ -25,18 +23,25 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
 
   // Sayfa açıldığında backend'den hasta bilgisi çek
   useEffect(() => {
-    getPatientInfo(patient.nationalId)
+    getPatientInfo()
       .then((data) => setPatientInfo(data))
       .catch((err) => {
         console.error("getPatientInfo error:", err);
-        // backend patlarsa en azından props'tan gelen bilgiyi göster
-        setPatientInfo(patient);
       })
       .finally(() => setLoading(false));
-  }, [patient.nationalId, patient]);
+  }, []);
+  // loading veya henüz veri yoksa
+  if (loading || !patientInfo) {
+    return (
+      <PageContainer maxWidth={600}>
+        <p>Yükleniyor...</p>
+      </PageContainer>
+    );
+  }
 
-  // Gösterilecek kaynağı belirle (backend varsa onu, yoksa props)
-  const info = patientInfo ?? patient;
+  // Burada asla null değil
+  const info = patientInfo;
+
 
   return (
     <PageContainer maxWidth={600}>

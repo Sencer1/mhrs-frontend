@@ -28,13 +28,11 @@ const mockFutureAppointments: PatientFutureAppointment[] = [
   },
 ];
 
-export async function getPatientInfo(
-    patientNationalId: string
-): Promise<PatientInfo>{
-    const {data} = await http.get<PatientInfo>("/patient/info" , {params: {patientNationalId: patientNationalId},
-    });
-    return data;
+export async function getPatientInfo(): Promise<PatientInfo> {
+  const { data } = await http.get<PatientInfo>("/patient/info");
+  return data;
 }
+
 
 export async function getPastAppointments(
   patientNationalId: string

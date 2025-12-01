@@ -60,13 +60,41 @@ function App() {
   ) => {
     setUserRole(role);
 
-    if (role === "PATIENT" && payload?.patient) {
-      setCurrentPatient(payload.patient);
+    // name'i loginReal içinde localStorage'a yazmıştık
+    const storedName = localStorage.getItem("name") ?? "";
+    const [firstNameFromStore, ...rest] = storedName.split(" ");
+    const lastNameFromStore = rest.join(" ");
+
+    if (role === "PATIENT") {
+      // LoginMock kullanıyorsan payload gelir, loginReal'de gelmez.
+      // İkisini de desteklemek için payload varsa onu, yoksa minimum dummy objeyi kullanıyoruz.
+      const basePatient: PatientInfo =
+        payload?.patient ??
+        ({
+          firstName: firstNameFromStore || "",
+          lastName: lastNameFromStore || "",
+          nationalId: "",    // gerçek değer /patient/info'dan gelecek
+          bloodGroup: "",
+          heightCm: 0,
+          weightKg: 0,
+        } as PatientInfo);
+
+      setCurrentPatient(basePatient);
       setPatientView("PATIENT_HOME");
     }
 
-    if (role === "DOCTOR" && payload?.doctor) {
-      setCurrentDoctor(payload.doctor);
+    if (role === "DOCTOR") {
+      const baseDoctor: DoctorInfo =
+        payload?.doctor ??
+        ({
+          firstName: firstNameFromStore || "",
+          lastName: lastNameFromStore || "",
+          nationalId: "",
+          hospitalName: "",
+          departmentName: "",
+        } as DoctorInfo);
+
+      setCurrentDoctor(baseDoctor);
       setDoctorView("DOCTOR_HOME");
     }
 
@@ -141,7 +169,6 @@ function App() {
     if (patientView === "PATIENT_HOME") {
       return (
         <PatientDashboard
-          patient={currentPatient}
           onOpenNewAppointment={() =>
             setPatientView("PATIENT_NEW_APPOINTMENT")
           }
@@ -181,6 +208,7 @@ function App() {
       );
     }
   }
+
 
   // === Admin flow ===
   if (userRole === "ADMIN") {
