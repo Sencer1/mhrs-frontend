@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import PageContainer from "../components/layout/PageContainer";
 import { PatientInfo, WaitingListItem } from "../types/domain";
 import { getMyWaitingList } from "../services/waitingListService";
+import { cancelWaitingList } from "../services/patientService";
 
 
 type PatientWaitingListsPageProps = {
@@ -36,6 +37,15 @@ const PatientWaitingListsPage: React.FC<PatientWaitingListsPageProps> = ({
   loadData();
     }, []);
 
+    const handleCancel = async (waitingId: number) => {
+    try {
+        await cancelWaitingList(waitingId);
+        setItems((prev) => prev.filter((x) => x.waitingId !== waitingId));
+    } catch (err) {
+        console.error(err);
+        alert("Bekleme listesi iptal edilemedi.");
+    }
+    };
 
   return (
     <PageContainer maxWidth={900}>
@@ -90,6 +100,7 @@ const PatientWaitingListsPage: React.FC<PatientWaitingListsPageProps> = ({
                 <th style={thStyle}>Hastane</th>
                 <th style={thStyle}>Bölüm</th>
                 <th style={thStyle}>Talep Tarihi</th>
+                <th style={thStyle}>İptal</th>
               </tr>
             </thead>
             <tbody>
@@ -116,6 +127,22 @@ const PatientWaitingListsPage: React.FC<PatientWaitingListsPageProps> = ({
                       {item.departmentName ?? item.departmentId}
                     </td>
                     <td style={tdStyle}>{formatted}</td>
+                    <td style={tdStyle}>
+                    <button
+                        onClick={() => handleCancel(item.waitingId)}
+                        style={{
+                        padding: "4px 8px",
+                        backgroundColor: "#ff4d4d",
+                        color: "white",
+                        border: "none",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        fontWeight: 600,
+                        }}
+                    >
+                        X
+                    </button>
+                    </td>
                   </tr>
                 );
               })}

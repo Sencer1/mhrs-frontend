@@ -32,6 +32,10 @@ export async function cancelAppointment(
   return;
 }
 
+export async function cancelWaitingList(waitingId: number): Promise<void>{
+  await http.post(`/patient/waiting-lists/${waitingId}/cancel`);
+}
+
 export async function registerPatient(
   payload: PatientInfo & { password: string }
 ): Promise<PatientInfo> {

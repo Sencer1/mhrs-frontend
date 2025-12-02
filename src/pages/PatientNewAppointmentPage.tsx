@@ -9,6 +9,11 @@ import {
   getDoctorSlots,
 } from "../services/doctorService";
 import { bookAppointment } from "../services/patientService";
+import {
+  joinDoctorWaitingList,
+  joinDepartmentWaitingList,
+} from "../services/waitingListService";
+
 
 type PatientNewAppointmentPageProps = {
   onBack: () => void;
@@ -427,19 +432,30 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
   }
 };
 
-  const handleJoinDoctorWaitList = (doctorId: string) => {
-    // TODO: backend POST /api/waiting-list/doctor/{doctorId}
-    alert(
-      `Bu doktor için tüm randevular dolu. Bekleme listesine eklendiniz. (Mock)`
-    );
+  const handleJoinDoctorWaitList = async (doctorId: string) => {
+    try {
+      await joinDoctorWaitingList(doctorId);
+      alert(
+        "Bu doktor için tüm randevular dolu. Bekleme listesine eklendiniz."
+      );
+    } catch (e) {
+      console.error(e);
+      alert("Doktor Bekleme listesine eklenirken bir hata oluştu.");
+    }
   };
 
-  const handleJoinDepartmentWaitList = () => {
-    // TODO: backend POST /api/waiting-list/department/{departmentId}
-    alert(
-      "Bu departmandaki tüm doktorların randevuları dolu. Departman bekleme listesine eklendiniz. (Mock)"
-    );
+  const handleJoinDepartmentWaitList = async () => {
+    if (!selectedDepartmentId) return;
+
+    try {
+      await joinDepartmentWaitingList(Number(selectedDepartmentId));
+      alert("Departman bekleme listesine eklendiniz.");
+    } catch (err) {
+      console.error(err);
+      alert("Departman bekleme listesine eklenirken bir hata oluştu.");
+    }
   };
+
 
   return (
     <PageContainer maxWidth={900}>

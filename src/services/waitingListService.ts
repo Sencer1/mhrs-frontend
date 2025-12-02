@@ -6,3 +6,10 @@ export async function getMyWaitingList(): Promise<WaitingListItem[]> {
   return response.data;
 }
 
+export async function joinDoctorWaitingList(doctorId: string) {
+  await http.post(`/waiting-list/doctor/${doctorId}`);
+}
+
+export async function joinDepartmentWaitingList(departmentId: number) {
+  await http.post(`/waiting-list/department/${departmentId}`);
+}
