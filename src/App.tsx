@@ -103,12 +103,14 @@ function App() {
     }
   };
 
-  const handleRegister = async (patient: PatientInfo) => {
-    // ileride: await registerPatient({ ...patient, password });
-    setCurrentPatient(patient);
-    setUserRole("PATIENT");
-    setPatientView("PATIENT_HOME");
-  };
+  const handleRegister = (patient: PatientInfo) => {
+  alert("Kayıt başarılı, lütfen giriş yapınız.");
+  setCurrentPatient(null);
+  setUserRole(null);
+
+  // Login ekranına dön
+  setAuthView("LOGIN");
+};
 
   // === Auth flow ===
   if (!userRole) {

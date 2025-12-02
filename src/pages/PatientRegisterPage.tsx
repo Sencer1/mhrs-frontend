@@ -25,48 +25,59 @@ const PatientRegisterPage: React.FC<PatientRegisterPageProps> = ({
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  e.preventDefault();
+  setError(null);
 
-    if (!firstName.trim() || !lastName.trim() || !nationalId.trim()) {
-      setError("Lütfen ad, soyad ve T.C. kimlik numarasını doldurunuz.");
-      return;
-    }
+  // 1) Boş alan kontrolü
+  if (
+    !firstName.trim() ||
+    !lastName.trim() ||
+    !nationalId.trim() ||
+    !bloodGroup.trim() ||
+    !heightCm.trim() ||
+    !weightKg.trim() ||
+    !password.trim()
+  ) {
+    setError("Lütfen tüm alanları doldurunuz.");
+    return;
+  }
 
-    if (nationalId.trim().length !== 11) {
-      setError("T.C. kimlik numarası 11 haneli olmalıdır.");
-      return;
-    }
+  // 2) T.C. uzunluk kontrolü
+  if (nationalId.trim().length !== 11) {
+    setError("T.C. kimlik numarası 11 haneli olmalıdır.");
+    return;
+  }
 
-    if (!password.trim()) {
-      setError("Lütfen bir şifre belirleyiniz.");
-      return;
-    }
+  // 3) Boy / kilo numeric ve pozitif kontrolü
+  const h = Number(heightCm);
+  const w = Number(weightKg);
 
-    const h = parseInt(heightCm, 10);
-    const w = parseInt(weightKg, 10);
+  if (Number.isNaN(h) || Number.isNaN(w) || h <= 0 || w <= 0) {
+    setError("Boy ve kilo alanları 0'dan büyük sayılar olmalıdır.");
+    return;
+  }
 
-    const payload = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      nationalId: nationalId.trim(),
-      bloodGroup,
-      heightCm: isNaN(h) ? 0 : h,
-      weightKg: isNaN(w) ? 0 : w,
-      password: password.trim(),
-    };
-
-    try {
-      setSubmitting(true);
-      const created = await registerPatient(payload);
-      onRegister(created);
-    } catch (err) {
-      console.error(err);
-      setError("Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyiniz.");
-    } finally {
-      setSubmitting(false);
-    }
+  const payload = {
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    nationalId: nationalId.trim(),
+    bloodGroup: bloodGroup.trim(),
+    heightCm: h,
+    weightKg: w,
+    password: password.trim(),
   };
+
+  try {
+    setSubmitting(true);
+    const created = await registerPatient(payload);
+    onRegister(created);
+  } catch (err) {
+    console.error(err);
+    setError("Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyiniz.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <PageContainer maxWidth={480}>

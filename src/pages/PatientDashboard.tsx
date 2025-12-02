@@ -14,24 +14,27 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
   onOpenPastAppointments,
   onOpenFutureAppointments,
 }) => {
-  // Bilgi paneli açık mı kapalı mı?
   const [showInfo, setShowInfo] = useState<boolean>(false);
 
-  // Backend’den gelen güncel hasta bilgisi
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sayfa açıldığında backend'den hasta bilgisi çek
   useEffect(() => {
     getPatientInfo()
-      .then((data) => setPatientInfo(data))
+      .then((data) => {
+        setPatientInfo(data);
+        setError(null);
+      })
       .catch((err) => {
         console.error("getPatientInfo error:", err);
+        setError("Bilgiler alınamadı. Lütfen tekrar giriş yapınız.");
       })
       .finally(() => setLoading(false));
   }, []);
-  // loading veya henüz veri yoksa
-  if (loading || !patientInfo) {
+
+  // 1) Sadece loading kontrolü
+  if (loading) {
     return (
       <PageContainer maxWidth={600}>
         <p>Yükleniyor...</p>
@@ -39,9 +42,19 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
     );
   }
 
-  // Burada asla null değil
-  const info = patientInfo;
+  // 2) Hata veya null info durumu
+  if (!patientInfo) {
+    return (
+      <PageContainer maxWidth={600}>
+        <h2>Hasta Paneli</h2>
+        <p style={{ color: "#b00020", marginTop: "8px" }}>
+          {error ?? "Hasta bilgileri yüklenemedi."}
+        </p>
+      </PageContainer>
+    );
+  }
 
+  const info = patientInfo;
 
   return (
     <PageContainer maxWidth={600}>
@@ -80,30 +93,24 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
             marginBottom: "16px",
           }}
         >
-          {loading ? (
-            <p>Yükleniyor...</p>
-          ) : (
-            <>
-              <p>
-                <strong>İsim:</strong> {info.firstName}
-              </p>
-              <p>
-                <strong>Soyisim:</strong> {info.lastName}
-              </p>
-              <p>
-                <strong>T.C. Numarası:</strong> {info.nationalId}
-              </p>
-              <p>
-                <strong>Kan Grubu:</strong> {info.bloodGroup}
-              </p>
-              <p>
-                <strong>Boy:</strong> {info.heightCm} cm
-              </p>
-              <p>
-                <strong>Kilo:</strong> {info.weightKg} kg
-              </p>
-            </>
-          )}
+          <p>
+            <strong>İsim:</strong> {info.firstName}
+          </p>
+          <p>
+            <strong>Soyisim:</strong> {info.lastName}
+          </p>
+          <p>
+            <strong>T.C. Numarası:</strong> {info.nationalId}
+          </p>
+          <p>
+            <strong>Kan Grubu:</strong> {info.bloodGroup}
+          </p>
+          <p>
+            <strong>Boy:</strong> {info.heightCm} cm
+          </p>
+          <p>
+            <strong>Kilo:</strong> {info.weightKg} kg
+          </p>
         </div>
       )}
 

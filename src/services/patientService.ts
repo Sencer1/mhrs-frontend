@@ -35,7 +35,10 @@ export async function cancelAppointment(
 export async function registerPatient(
   payload: PatientInfo & { password: string }
 ): Promise<PatientInfo> {
-  // const { data } = await http.post<PatientInfo>("/patients/register", payload);
-  // return data;
-  return payload;
+  const { data } = await http.post<PatientInfo>("/patient/register", payload);
+  return data;
+}
+
+export async function bookAppointment(appointmentId: number): Promise<void> {
+  await http.post(`/patient/appointments/${appointmentId}/book`);
 }
