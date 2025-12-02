@@ -177,20 +177,10 @@ const mockAdminWaitingList: AdminWaitingItem[] = [
 // Admin kullanıcılar
 const mockAdmins: AdminUser[] = [
   {
-    id: "a1",
-    firstName: "Sistem",
-    lastName: "Yöneticisi",
     username: "admin",
-    email: "admin@example.com",
-    nationalId: "99999999999",
   },
   {
-    id: "a2",
-    firstName: "Ayşe",
-    lastName: "Yönetici",
     username: "ayse.admin",
-    email: "ayse.admin@example.com",
-    nationalId: "88888888888",
   },
 ];
 
@@ -246,8 +236,22 @@ export async function fetchAdminWaitingList(): Promise<AdminWaitingItem[]> {
   // TODO: replace with GET /api/admin/waiting-list
   return mockAdminWaitingList;
 }
-
+// burasını gerçek admin ile değiştiriyorum
+// burası sayfa açılınca admin listesini backenden çekiyor
 export async function fetchAdmins(): Promise<AdminUser[]> {
-  // TODO: replace with GET /api/admin/users
-  return mockAdmins;
+  // backende GET isteği atıp çekiyoruz
+  const { data } = await http.get<AdminUser[]>("/admin/users");
+  return data; // burası backenden dönen liste 
+}
+// yeni admimi eklemek için burası
+export async function createAdmin(username: string, password: string): Promise<AdminUser>{
+  //backend e göndereciğimiz body kısmı burası
+  const body = { username, password};
+  // Post ile yeni veri göndericez burdan
+  const {data} = await http.post<AdminUser>("/admin/users", body);
+  return data; // Dto dan bize dönen java objesi
+}
+// olan adminleri silmek için burası
+export async function deleteAdmin(username: string): Promise<void>{
+  await http.delete(`/admin/users/${username}`); // burda backendde delete işlemi için
 }

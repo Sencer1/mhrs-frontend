@@ -119,12 +119,7 @@ export interface AdminWaitingItem {
 }
 
 export interface AdminUser {
-  id: string;
-  firstName: string;
-  lastName: string;
   username: string;
-  email: string;
-  nationalId: string;
 }
 
 export type AdminDashboardSummary = {
