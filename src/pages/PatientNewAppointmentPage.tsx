@@ -160,6 +160,7 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
   onBack,
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const today = new Date().toISOString().split("T")[0];
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(
     null
@@ -476,6 +477,7 @@ const PatientNewAppointmentPage: React.FC<PatientNewAppointmentPageProps> = ({
         <input
           type="date"
           value={selectedDate}
+          min={today}
           onChange={(e) => setSelectedDate(e.target.value)}
           style={{
             padding: "8px 10px",

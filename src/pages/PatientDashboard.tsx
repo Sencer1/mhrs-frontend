@@ -7,12 +7,14 @@ type PatientDashboardProps = {
   onOpenNewAppointment: () => void;
   onOpenPastAppointments: () => void;
   onOpenFutureAppointments: () => void;
+  onOpenWaitingLists: () => void;
 };
 
 const PatientDashboard: React.FC<PatientDashboardProps> = ({
   onOpenNewAppointment,
   onOpenPastAppointments,
   onOpenFutureAppointments,
+  onOpenWaitingLists,
 }) => {
   const [showInfo, setShowInfo] = useState<boolean>(false);
 
@@ -140,11 +142,27 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({
           backgroundColor: "#f5f5f5",
           fontSize: "16px",
           fontWeight: 700,
-          marginBottom: "16px",
+          marginBottom: "8px",
         }}
       >
         Geçmiş Randevularım
       </div>
+
+      <div
+        onClick={onOpenWaitingLists}
+        style={{
+          border: "1px solid #ccc",
+          borderRadius:"8px",
+          padding: "12px 16px",
+          cursor: "pointer",
+          backgroundColor: "#f5f5f5",
+          fontSize: "16px",
+          fontWeight: 700,
+          marginBottom: "16px",
+        }}
+       >
+        Bekleme Listelerim
+       </div>
 
       <button
         onClick={onOpenNewAppointment}

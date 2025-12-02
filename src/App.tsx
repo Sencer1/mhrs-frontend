@@ -6,6 +6,7 @@ import PatientDashboard from "./pages/PatientDashboard";
 import PatientPastAppointmentsPage from "./pages/PatientPastAppointmentsPage";
 import PatientFutureAppointmentsPage from "./pages/PatientFutureAppointmentsPage";
 import PatientNewAppointmentPage from "./pages/PatientNewAppointmentPage";
+import PatientWaitingListsPage from "./pages/PatientWaitingListsPage";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorPastAppointmentsPage from "./pages/DoctorPastAppointmentsPage";
 import DoctorFutureAppointmentsPage from "./pages/DoctorFutureAppointmentsPage";
@@ -29,7 +30,8 @@ type PatientView =
   | "PATIENT_HOME"
   | "PATIENT_PAST_APPOINTMENTS"
   | "PATIENT_FUTURE_APPOINTMENTS"
-  | "PATIENT_NEW_APPOINTMENT";
+  | "PATIENT_NEW_APPOINTMENT"
+  | "PATIENT_WAITING_LISTS";
 
 type AdminView =
   | "ADMIN_HOME"
@@ -180,6 +182,9 @@ function App() {
           onOpenFutureAppointments={() =>
             setPatientView("PATIENT_FUTURE_APPOINTMENTS")
           }
+          onOpenWaitingLists={() =>
+            setPatientView("PATIENT_WAITING_LISTS")
+          }
         />
       );
     }
@@ -209,6 +214,15 @@ function App() {
         />
       );
     }
+    if (patientView === "PATIENT_WAITING_LISTS"){
+      return(
+        <PatientWaitingListsPage
+          patient={currentPatient}
+          onBack={() => setPatientView("PATIENT_HOME")}
+        />
+      );
+    }
+    
   }
 
 

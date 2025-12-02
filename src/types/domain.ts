@@ -144,3 +144,18 @@ export type BackendLoginResponse = {
   lastName: string;
 };
 
+export type WaitingListItem = {
+  departmentId: string | undefined;
+  waitingId: number;
+  level: string;
+  doctorName?: string;
+  doctorNationalId: string;
+  hospitalName?: string;
+  hospitalId: number;
+  departmentName?: string;
+  patientName?: string;
+  patientNationalId: string;
+  requestDateTime: string; // ISO string
+};
+
+
