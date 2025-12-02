@@ -1,9 +1,14 @@
 import http from "./httpClient";
 import { WaitingListItem } from "../types/domain";
 
-export async function getMyWaitingList(): Promise<WaitingListItem[]> {
+export async function getPatientWaitingList(): Promise<WaitingListItem[]> {
   const response = await http.get<WaitingListItem[]>("/patient/waiting-list");
   return response.data;
+}
+
+export async function getDoctorWaitingList(): Promise<WaitingListItem[]> {
+    const response = await http.get<WaitingListItem[]>("/doctor/waiting-list");
+    return response.data;
 }
 
 export async function joinDoctorWaitingList(doctorId: string) {

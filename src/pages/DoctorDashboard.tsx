@@ -7,15 +7,18 @@ type DoctorDashboardProps = {
   doctor: DoctorInfo; // login'den gelen temel bilgi (fallback)
   onOpenPastAppointments: () => void;
   onOpenFutureAppointments: () => void;
+  onOpenWaitingLists: () => void;
 };
 
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   doctor,
   onOpenPastAppointments,
   onOpenFutureAppointments,
+  onOpenWaitingLists,
 }) => {
   const [showInfo, setShowInfo] = useState<boolean>(false);
-  const [showAppointmentsMenu, setShowAppointmentsMenu] = useState<boolean>(false);
+  const [showAppointmentsMenu, setShowAppointmentsMenu] =
+    useState<boolean>(false);
 
   // Backend’ten gelen güncel doktor bilgisi
   const [doctorInfo, setDoctorInfo] = useState<DoctorInfo | null>(null);
@@ -93,13 +96,34 @@ const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         isOpen={showAppointmentsMenu}
         onToggle={() => setShowAppointmentsMenu((prev) => !prev)}
       >
-        <MenuItem onClick={onOpenPastAppointments}>
-          Geçmiş Randevularım
-        </MenuItem>
         <MenuItem onClick={onOpenFutureAppointments}>
           Gelecek Randevularım
         </MenuItem>
+        <MenuItem onClick={onOpenPastAppointments}>
+          Geçmiş Randevularım
+        </MenuItem>
       </ToggleCard>
+
+      {/* Bekleme listeleri için ayrı kutu */}
+      <div
+        onClick={onOpenWaitingLists}
+        style={{
+          border: "1px solid #ccc",
+          borderRadius: "8px",
+          padding: "12px 16px",
+          cursor: "pointer",
+          backgroundColor: "#f5f5f5",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "16px",
+          fontWeight: 700,
+          marginTop: "8px",
+        }}
+      >
+        <span>Bekleme Listelerim</span>
+        <span style={{ fontSize: "16px", fontWeight: 700 }}>▶</span>
+      </div>
     </PageContainer>
   );
 };

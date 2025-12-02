@@ -20,11 +20,14 @@ import { AdminWaitingListManagementPage } from "./pages/AdminWaitingListManageme
 import { AdminAdminsManagementPage } from "./pages/AdminAdminsManagementPage";
 
 import { UserRole, PatientInfo, DoctorInfo } from "./types/domain";
+import DoctorWaitingListsPage from "./pages/DoctorWaitingLists";
 
 type DoctorView =
   | "DOCTOR_HOME"
   | "DOCTOR_PAST_APPOINTMENTS"
-  | "DOCTOR_FUTURE_APPOINTMENTS";
+  | "DOCTOR_FUTURE_APPOINTMENTS"
+  | "DOCTOR_WAITING_LISTS";
+
 
 type PatientView =
   | "PATIENT_HOME"
@@ -145,6 +148,9 @@ function App() {
           onOpenFutureAppointments={() =>
             setDoctorView("DOCTOR_FUTURE_APPOINTMENTS")
           }
+          onOpenWaitingLists={() =>
+            setDoctorView("DOCTOR_WAITING_LISTS")
+          }
         />
       );
     }
@@ -166,6 +172,15 @@ function App() {
         />
       );
     }
+    if (doctorView === "DOCTOR_WAITING_LISTS") {
+      return (
+        <DoctorWaitingListsPage
+          doctor={currentDoctor}
+          onBack={() => setDoctorView("DOCTOR_HOME")}
+        />
+      );
+    }
+
   }
 
   // === Patient flow ===
