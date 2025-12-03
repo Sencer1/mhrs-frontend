@@ -32,3 +32,24 @@ export async function searchHospitals(options: {
   });
   return res.data;
 }
+
+// Admin paneli için: DB'deki tüm hastaneleri getir
+export async function getAllHospitals(): Promise<HospitalDto[]> {
+  const res = await http.get<HospitalDto[]>(`${BASE_PATH}/all`);
+  return res.data;
+}
+
+export type CreateHospitalPayload = {
+  name: string;
+  city: string;
+  district?: string;
+  streetAddress?: string;
+  phoneNumber?: string;
+};
+
+export async function createHospital(
+  payload: CreateHospitalPayload
+): Promise<HospitalDto> {
+  const res = await http.post<HospitalDto>(`${BASE_PATH}`, payload);
+  return res.data;
+}

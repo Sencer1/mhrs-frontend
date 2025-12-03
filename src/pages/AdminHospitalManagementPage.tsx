@@ -1,13 +1,19 @@
-// src/pages/AdminHospitalManagementPage.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import {
   AdminHospital,
   AdminDepartment,
 } from "../types/domain";
 import {
-  fetchAdminHospitals,
-  fetchAdminDepartments,
-} from "../services/adminService";
+  getAllHospitals,
+  HospitalDto,
+  createHospital,
+} from "../services/hospitalService";
+import {
+  getDepartmentsByHospital,
+  DepartmentDto,
+  createDepartment,
+  deleteDepartment,
+} from "../services/departmentService";
 import PageContainer from "../components/layout/PageContainer";
 import BackButton from "../components/common/BackButton";
 
@@ -31,16 +37,58 @@ const AdminHospitalManagementPage: React.FC<
 
   const [hospitalFilterText, setHospitalFilterText] = useState("");
 
+  // 1) Sayfa açıldığında DB'den hastaneleri çek
   useEffect(() => {
-    Promise.all([fetchAdminHospitals(), fetchAdminDepartments()]).then(
-      ([hs, ds]) => {
-        setHospitals(hs);
-        setDepartments(ds);
-        if (!selectedHospitalId && hs.length > 0) {
-          setSelectedHospitalId(hs[0].id);
-        }
+    const loadHospitals = async () => {
+      const hospitalDtos: HospitalDto[] = await getAllHospitals();
+
+      const adminHospitals: AdminHospital[] = hospitalDtos.map((h) => ({
+        id: String(h.hospitalId),
+        name: h.name,
+        city: h.city,
+      }));
+
+      setHospitals(adminHospitals);
+
+      if (adminHospitals.length > 0) {
+        setSelectedHospitalId(adminHospitals[0].id);
+      } else {
+        setSelectedHospitalId(null);
+        setDepartments([]);
       }
-    );
+    };
+
+    loadHospitals();
+  }, []);
+
+  // 2) Seçili hastane değiştikçe o hastanenin departmanlarını gerçek DB'den çek
+  useEffect(() => {
+    const loadDepartments = async () => {
+      if (!selectedHospitalId) {
+        setDepartments([]);
+        return;
+      }
+
+      const hospitalIdNum = Number(selectedHospitalId);
+      if (Number.isNaN(hospitalIdNum)) {
+        setDepartments([]);
+        return;
+      }
+
+      const deptDtos: DepartmentDto[] = await getDepartmentsByHospital(
+        hospitalIdNum
+      );
+
+      const adminDepts: AdminDepartment[] = deptDtos.map((d) => ({
+        id: String(d.departmentId),
+        name: d.branchName,
+        hospitalId: String(selectedHospitalId),
+      }));
+
+      setDepartments(adminDepts);
+    };
+
+    loadDepartments();
   }, [selectedHospitalId]);
 
   const hospitalDepartments = useMemo(
@@ -57,37 +105,76 @@ const AdminHospitalManagementPage: React.FC<
     });
   }, [hospitals, hospitalFilterText]);
 
-  const handleAddHospital = () => {
-    if (!newHospitalName.trim() || !newHospitalCity.trim()) return;
+  const handleAddHospital = async () => {
+    const name = newHospitalName.trim();
+    const city = newHospitalCity.trim();
 
-    const newId = `h${Date.now()}`;
-    const newHospital: AdminHospital = {
-      id: newId,
-      name: newHospitalName.trim(),
-      city: newHospitalCity.trim(),
-    };
+    if (!name || !city) return;
 
-    setHospitals((prev) => [...prev, newHospital]);
-    setNewHospitalName("");
-    setNewHospitalCity("");
+    try {
+      const created = await createHospital({
+        name,
+        city,
+      });
+
+      const newHospital: AdminHospital = {
+        id: String(created.hospitalId),
+        name: created.name,
+        city: created.city,
+      };
+
+      setHospitals((prev) => [...prev, newHospital]);
+      setSelectedHospitalId(newHospital.id);
+      setNewHospitalName("");
+      setNewHospitalCity("");
+    } catch (err) {
+      console.error("Hastane oluşturulurken hata oluştu", err);
+      alert("Hastane kaydedilirken bir hata oluştu.");
+    }
   };
 
-  const handleAddDepartment = () => {
+  const handleAddDepartment = async () => {
     if (!selectedHospitalId || !newDepartmentName.trim()) return;
 
-    const newId = `d${Date.now()}`;
-    const newDept: AdminDepartment = {
-      id: newId,
-      name: newDepartmentName.trim(),
-      hospitalId: selectedHospitalId,
-    };
+    const hospitalIdNum = Number(selectedHospitalId);
+    if (Number.isNaN(hospitalIdNum)) return;
 
-    setDepartments((prev) => [...prev, newDept]);
-    setNewDepartmentName("");
+    try {
+      const created = await createDepartment({
+        hospitalId: hospitalIdNum,
+        branchName: newDepartmentName.trim(),
+      });
+
+      const newDept: AdminDepartment = {
+        id: String(created.departmentId),
+        name: created.branchName,
+        hospitalId: selectedHospitalId,
+      };
+
+      setDepartments((prev) => [...prev, newDept]);
+      setNewDepartmentName("");
+    } catch (err) {
+      console.error("Departman oluşturulurken hata oluştu", err);
+      alert("Departman kaydedilirken bir hata oluştu.");
+    }
   };
 
-  const handleDeleteDepartment = (id: string) => {
-    setDepartments((prev) => prev.filter((d) => d.id !== id));
+  const handleDeleteDepartment = async (id: string) => {
+    const confirmed = window.confirm(
+      "Bu departmanı silmek istediğinize emin misiniz?"
+    );
+    if (!confirmed) return;
+
+    const numericId = Number(id);
+    if (Number.isNaN(numericId)) return;
+
+    try {
+      await deleteDepartment(numericId);
+      setDepartments((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      console.error("Departman silinirken hata oluştu", err);
+      alert("Departman silinirken bir hata oluştu. (Bağlı doktor/randevu olabilir)");
+    }
   };
 
   return (
