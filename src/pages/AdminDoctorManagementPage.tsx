@@ -9,6 +9,8 @@ import {
   fetchAdminDoctors,
   fetchAdminHospitals,
   fetchAdminDepartments,
+  createAdminDoctor,
+  deleteAdminDoctor,
 } from "../services/adminService";
 import PageContainer from "../components/layout/PageContainer";
 import BackButton from "../components/common/BackButton";
@@ -31,21 +33,29 @@ const AdminDoctorManagementPage: React.FC<
   const [newDepartmentId, setNewDepartmentId] = useState<string>("");
 
   const [filterText, setFilterText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([
       fetchAdminDoctors(),
       fetchAdminHospitals(),
       fetchAdminDepartments(),
-    ]).then(([docs, hs, ds]) => {
-      setDoctors(docs);
-      setHospitals(hs);
-      setDepartments(ds);
-      if (!newHospitalId && hs.length > 0) {
-        setNewHospitalId(hs[0].id);
-      }
-    });
-  }, [newHospitalId]);
+    ])
+      .then(([docs, hs, ds]) => {
+        setDoctors(docs);
+        setHospitals(hs);
+        setDepartments(ds);
+        if (!newHospitalId && hs.length > 0) {
+          setNewHospitalId(hs[0].id);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Veriler yüklenirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredDepartments = useMemo(
     () => departments.filter((d) => d.hospitalId === newHospitalId),
@@ -72,7 +82,7 @@ const AdminDoctorManagementPage: React.FC<
     });
   }, [doctors, filterText]);
 
-  const handleAddDoctor = () => {
+  const handleAddDoctor = async () => {
     if (
       !newFirstName.trim() ||
       !newLastName.trim() ||
@@ -80,27 +90,49 @@ const AdminDoctorManagementPage: React.FC<
       !newHospitalId ||
       !newDepartmentId
     ) {
+      alert("Lütfen tüm alanları doldurunuz.");
       return;
     }
 
-    const newDoc: AdminDoctor = {
-      id: `doc${Date.now()}`,
-      firstName: newFirstName.trim(),
-      lastName: newLastName.trim(),
-      nationalId: newNationalId.trim(),
-      hospitalId: newHospitalId,
-      departmentId: newDepartmentId,
-    };
+    setLoading(true);
+    try {
+      const newDocPayload: AdminDoctor = {
+        id: "", // Backend will assign ID
+        firstName: newFirstName.trim(),
+        lastName: newLastName.trim(),
+        nationalId: newNationalId.trim(),
+        hospitalId: newHospitalId,
+        departmentId: newDepartmentId,
+      };
 
-    setDoctors((prev) => [...prev, newDoc]);
+      const createdDoc = await createAdminDoctor(newDocPayload);
+      setDoctors((prev) => [...prev, createdDoc]);
 
-    setNewFirstName("");
-    setNewLastName("");
-    setNewNationalId("");
+      setNewFirstName("");
+      setNewLastName("");
+      setNewNationalId("");
+      alert("Doktor başarıyla eklendi.");
+    } catch (error) {
+      console.error(error);
+      alert("Doktor eklenirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteDoctor = (id: string) => {
-    setDoctors((prev) => prev.filter((d) => d.id !== id));
+  const handleDeleteDoctor = async (id: string) => {
+    if (!window.confirm("Bu doktoru silmek istediğinize emin misiniz?")) return;
+
+    setLoading(true);
+    try {
+      await deleteAdminDoctor(id);
+      setDoctors((prev) => prev.filter((d) => d.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert("Doktor silinirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getHospitalName = (id: string) =>
@@ -217,18 +249,19 @@ const AdminDoctorManagementPage: React.FC<
 
           <button
             onClick={handleAddDoctor}
+            disabled={loading}
             style={{
               padding: "6px 12px",
               borderRadius: "6px",
               border: "1px solid #198754",
-              backgroundColor: "#198754",
+              backgroundColor: loading ? "#ccc" : "#198754",
               color: "#fff",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               fontSize: "14px",
               fontWeight: 500,
             }}
           >
-            Doktor Ekle
+            {loading ? "Ekleniyor..." : "Doktor Ekle"}
           </button>
         </div>
       </div>

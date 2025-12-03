@@ -1,7 +1,7 @@
 // src/pages/admin/AdminPrescriptionManagementPage.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminPrescription } from "../types/domain";
-import { fetchAdminPrescriptions } from "../services/adminService";
+import { fetchAdminPrescriptions, deleteAdminPrescription } from "../services/adminService";
 import BackButton from "../components/common/BackButton";
 import PageContainer from "../components/layout/PageContainer";
 
@@ -15,9 +15,17 @@ export const AdminPrescriptionManagementPage: React.FC<
   const [prescriptions, setPrescriptions] = useState<AdminPrescription[]>([]);
   const [filterText, setFilterText] = useState("");
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    // mock veya backend çağrısı
-    fetchAdminPrescriptions().then((data) => setPrescriptions(data));
+    setLoading(true);
+    fetchAdminPrescriptions()
+      .then(setPrescriptions)
+      .catch((err) => {
+        console.error(err);
+        alert("Reçeteler yüklenirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const visiblePrescriptions = useMemo(() => {
@@ -34,16 +42,30 @@ export const AdminPrescriptionManagementPage: React.FC<
         " " +
         rx.departmentName +
         " " +
-        rx.medicines.join(" ")
+        rx.departmentName +
+        " " +
+        (rx.medicines || []).join(" ") +
+        " " +
+        (rx.drugs || []).join(" ")
       ).toLocaleLowerCase("tr-TR");
 
       return joinedText.includes(q);
     });
   }, [prescriptions, filterText]);
 
-  const handleDeletePrescription = (id: string) => {
-    // TODO: backend delete endpoint’ine bağla, sonra listeyi yeniden yükle
-    setPrescriptions((prev) => prev.filter((rx) => rx.id !== id));
+  const handleDeletePrescription = async (id: string) => {
+    if (!window.confirm("Bu reçeteyi silmek istediğinize emin misiniz?")) return;
+
+    setLoading(true);
+    try {
+      await deleteAdminPrescription(id);
+      setPrescriptions((prev) => prev.filter((rx) => rx.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Reçete silinirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,7 +113,8 @@ export const AdminPrescriptionManagementPage: React.FC<
           backgroundColor: "#f8f9fa",
         }}
       >
-        {visiblePrescriptions.map((rx) => (
+        {loading && <p>Yükleniyor...</p>}
+        {!loading && visiblePrescriptions.map((rx) => (
           <div
             key={rx.id}
             style={{
@@ -111,7 +134,7 @@ export const AdminPrescriptionManagementPage: React.FC<
               }}
             >
               <div style={{ fontWeight: 600 }}>
-                Reçete Tarihi: {rx.date}
+                Reçete Tarihi: {rx.date || rx.prescriptionDateTime || "-"}
               </div>
               <span
                 style={{
@@ -122,7 +145,7 @@ export const AdminPrescriptionManagementPage: React.FC<
                   color: "white",
                 }}
               >
-                {rx.id.toUpperCase()}
+                {rx.id ? rx.id.toUpperCase() : ""}
               </span>
             </div>
 
@@ -144,7 +167,7 @@ export const AdminPrescriptionManagementPage: React.FC<
             <div style={{ fontSize: "13px", marginBottom: "6px" }}>
               <strong>İlaçlar:</strong>
               <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
-                {rx.medicines.map((m) => (
+                {(rx.medicines || rx.drugs || []).map((m) => (
                   <li key={m}>{m}</li>
                 ))}
               </ul>
@@ -175,7 +198,7 @@ export const AdminPrescriptionManagementPage: React.FC<
           </div>
         ))}
 
-        {visiblePrescriptions.length === 0 && (
+        {!loading && visiblePrescriptions.length === 0 && (
           <p style={{ color: "#777", fontSize: "14px" }}>
             Filtrenize uygun reçete bulunamadı.
           </p>

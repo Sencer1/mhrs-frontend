@@ -96,16 +96,20 @@ export interface AdminAppointment {
   patientNationalId: string;
   status: AdminAppointmentStatus;
   prescriptionText?: string;
+  slotDateTime?: string; // Fallback for dateTime
+  date?: string; // Backend'den gelen olası tarih alanı
 }
 
 export interface AdminPrescription {
   id: string;
   date: string; // ISO date string: "2025-11-29"
+  prescriptionDateTime?: string; // Backend'den gelen olası tarih alanı
   patientName: string;
   doctorName: string;
   hospitalName: string;
   departmentName: string;
   medicines: string[]; // ilaç isimleri
+  drugs?: string[]; // Backend'den gelen olası ilaç listesi
 }
 
 export interface AdminWaitingItem {

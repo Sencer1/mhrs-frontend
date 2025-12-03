@@ -197,9 +197,8 @@ const mockAdmins: AdminUser[] = [
 // --- HOSPITAL / DEPARTMENT ---
 
 export async function fetchAdminHospitals(): Promise<AdminHospital[]> {
-  // const { data } = await http.get<AdminHospital[]>("/admin/hospitals");
-  // return data;
-  return mockHospitals;
+  const { data } = await http.get<AdminHospital[]>("/admin/hospitals");
+  return data;
 }
 
 export async function fetchAdminDashboardSummary(): Promise<AdminDashboardSummary> {
@@ -208,17 +207,24 @@ export async function fetchAdminDashboardSummary(): Promise<AdminDashboardSummar
 }
 
 export async function fetchAdminDepartments(): Promise<AdminDepartment[]> {
-  // const { data } = await http.get<AdminDepartment[]>("/admin/departments");
-  // return data;
-  return mockDepartments;
+  const { data } = await http.get<AdminDepartment[]>("/admin/departments");
+  return data;
 }
 
 // --- DOCTORS ---
 
 export async function fetchAdminDoctors(): Promise<AdminDoctor[]> {
-  // const { data } = await http.get<AdminDoctor[]>("/admin/doctors");
-  // return data;
-  return mockDoctors;
+  const { data } = await http.get<AdminDoctor[]>("/admin/doctors");
+  return data;
+}
+
+export async function createAdminDoctor(doctor: AdminDoctor): Promise<AdminDoctor> {
+  const { data } = await http.post<AdminDoctor>("/admin/doctors", doctor);
+  return data;
+}
+
+export async function deleteAdminDoctor(id: string): Promise<void> {
+  await http.delete(`/admin/doctors/${id}`);
 }
 
 // --- PATIENTS ---
@@ -231,20 +237,39 @@ export async function fetchAdminPatients(): Promise<AdminPatient[]> {
 
 // --- APPOINTMENTS LOG ---
 
-export async function fetchAdminAppointments(): Promise<AdminAppointment[]> {
-  // const { data } = await http.get<AdminAppointment[]>("/admin/appointments");
-  // return data;
-  return mockAppointments;
+export interface AppointmentFilterParams {
+  dateFrom?: string;
+  dateTo?: string;
+  status?: string;
+  search?: string;
+}
+
+export async function fetchAdminAppointments(
+  params: AppointmentFilterParams = {}
+): Promise<AdminAppointment[]> {
+  console.log("API Request -> GET /admin/appointments Params:", params);
+  const { data } = await http.get<AdminAppointment[]>("/admin/appointments", {
+    params,
+  });
+  return data;
 }
 
 export async function fetchAdminPrescriptions(): Promise<AdminPrescription[]> {
-  // TODO: replace with GET /api/admin/prescriptions
-  return mockAdminPrescriptions;
+  const { data } = await http.get<AdminPrescription[]>("/admin/prescriptions");
+  return data;
+}
+
+export async function deleteAdminPrescription(id: string): Promise<void> {
+  await http.delete(`/admin/prescriptions/${id}`);
 }
 
 export async function fetchAdminWaitingList(): Promise<AdminWaitingItem[]> {
-  // TODO: replace with GET /api/admin/waiting-list
-  return mockAdminWaitingList;
+  const { data } = await http.get<AdminWaitingItem[]>("/admin/waiting-list");
+  return data;
+}
+
+export async function deleteAdminWaitingItem(id: string): Promise<void> {
+  await http.delete(`/admin/waiting-list/${id}`);
 }
 
 export async function fetchAdmins(): Promise<AdminUser[]> {
