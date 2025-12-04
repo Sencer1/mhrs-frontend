@@ -7,6 +7,10 @@ import {
 import {
   fetchAdminHospitals,
   fetchAdminDepartments,
+  createAdminHospital,
+  deleteAdminHospital,
+  createAdminDepartment,
+  deleteAdminDepartment,
 } from "../services/adminService";
 import PageContainer from "../components/layout/PageContainer";
 import BackButton from "../components/common/BackButton";
@@ -20,6 +24,7 @@ const AdminHospitalManagementPage: React.FC<
 > = ({ onBack }) => {
   const [hospitals, setHospitals] = useState<AdminHospital[]>([]);
   const [departments, setDepartments] = useState<AdminDepartment[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(
     null
@@ -27,20 +32,26 @@ const AdminHospitalManagementPage: React.FC<
 
   const [newHospitalName, setNewHospitalName] = useState("");
   const [newHospitalCity, setNewHospitalCity] = useState("");
+  const [newHospitalDistrict, setNewHospitalDistrict] = useState("");
   const [newDepartmentName, setNewDepartmentName] = useState("");
 
   const [hospitalFilterText, setHospitalFilterText] = useState("");
 
   useEffect(() => {
-    Promise.all([fetchAdminHospitals(), fetchAdminDepartments()]).then(
-      ([hs, ds]) => {
+    setLoading(true);
+    Promise.all([fetchAdminHospitals(), fetchAdminDepartments()])
+      .then(([hs, ds]) => {
         setHospitals(hs);
         setDepartments(ds);
         if (!selectedHospitalId && hs.length > 0) {
           setSelectedHospitalId(hs[0].id);
         }
-      }
-    );
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Veriler yüklenirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
   }, [selectedHospitalId]);
 
   const hospitalDepartments = useMemo(
@@ -57,37 +68,86 @@ const AdminHospitalManagementPage: React.FC<
     });
   }, [hospitals, hospitalFilterText]);
 
-  const handleAddHospital = () => {
-    if (!newHospitalName.trim() || !newHospitalCity.trim()) return;
+  const handleAddHospital = async () => {
+    if (!newHospitalName.trim() || !newHospitalCity.trim() || !newHospitalDistrict.trim()) return;
 
-    const newId = `h${Date.now()}`;
-    const newHospital: AdminHospital = {
-      id: newId,
-      name: newHospitalName.trim(),
-      city: newHospitalCity.trim(),
-    };
-
-    setHospitals((prev) => [...prev, newHospital]);
-    setNewHospitalName("");
-    setNewHospitalCity("");
+    setLoading(true);
+    try {
+      // ID backend tarafından verilecek, biz sadece payload gönderiyoruz
+      // Ancak AdminHospital tipinde ID zorunlu görünüyor, backend ignore edebilir veya
+      // createAdminHospital parametresini Omit<AdminHospital, 'id'> yapabiliriz.
+      // Şimdilik geçici bir ID ile gönderelim veya backend'in ID'yi ezmesini bekleyelim.
+      const newHospitalPayload: AdminHospital = {
+        id: "", // Backend atayacak
+        name: newHospitalName.trim(),
+        city: newHospitalCity.trim(),
+        district: newHospitalDistrict.trim(),
+      };
+      const createdHospital = await createAdminHospital(newHospitalPayload);
+      setHospitals((prev) => [...prev, createdHospital]);
+      setNewHospitalName("");
+      setNewHospitalCity("");
+      setNewHospitalDistrict("");
+    } catch (err) {
+      console.error(err);
+      alert("Hastane eklenirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddDepartment = () => {
+  const handleDeleteHospital = async (id: string) => {
+    if (!window.confirm("Bu hastaneyi ve bağlı departmanları silmek istediğinize emin misiniz?")) return;
+
+    setLoading(true);
+    try {
+      await deleteAdminHospital(id);
+      setHospitals((prev) => prev.filter((h) => h.id !== id));
+      if (selectedHospitalId === id) {
+        setSelectedHospitalId(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Hastane silinirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddDepartment = async () => {
     if (!selectedHospitalId || !newDepartmentName.trim()) return;
 
-    const newId = `d${Date.now()}`;
-    const newDept: AdminDepartment = {
-      id: newId,
-      name: newDepartmentName.trim(),
-      hospitalId: selectedHospitalId,
-    };
-
-    setDepartments((prev) => [...prev, newDept]);
-    setNewDepartmentName("");
+    setLoading(true);
+    try {
+      const newDeptPayload: AdminDepartment = {
+        id: "", // Backend atayacak
+        name: newDepartmentName.trim(),
+        hospitalId: selectedHospitalId,
+      };
+      const createdDept = await createAdminDepartment(newDeptPayload);
+      setDepartments((prev) => [...prev, createdDept]);
+      setNewDepartmentName("");
+    } catch (err) {
+      console.error(err);
+      alert("Departman eklenirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteDepartment = (id: string) => {
-    setDepartments((prev) => prev.filter((d) => d.id !== id));
+  const handleDeleteDepartment = async (id: string) => {
+    if (!window.confirm("Bu departmanı silmek istediğinize emin misiniz?")) return;
+
+    setLoading(true);
+    try {
+      await deleteAdminDepartment(id);
+      setDepartments((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Departman silinirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -148,7 +208,27 @@ const AdminHospitalManagementPage: React.FC<
                 }}
               >
                 <div style={{ fontWeight: 600 }}>{h.name}</div>
-                <div style={{ fontSize: "13px", color: "#555" }}>{h.city}</div>
+                <div style={{ fontSize: "13px", color: "#555" }}>
+                  {h.city} / {h.district}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteHospital(h.id);
+                  }}
+                  style={{
+                    marginTop: "4px",
+                    padding: "2px 6px",
+                    fontSize: "11px",
+                    color: "white",
+                    backgroundColor: "#dc3545",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Sil
+                </button>
               </div>
             ))}
             {visibleHospitals.length === 0 && (
@@ -181,6 +261,19 @@ const AdminHospitalManagementPage: React.FC<
               placeholder="Şehir"
               value={newHospitalCity}
               onChange={(e) => setNewHospitalCity(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "6px 8px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                marginBottom: "6px",
+              }}
+            />
+            <input
+              type="text"
+              placeholder="İlçe"
+              value={newHospitalDistrict}
+              onChange={(e) => setNewHospitalDistrict(e.target.value)}
               style={{
                 width: "100%",
                 padding: "6px 8px",

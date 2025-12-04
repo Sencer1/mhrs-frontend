@@ -1,7 +1,7 @@
 // src/pages/admin/AdminAdminsManagementPage.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminUser } from "../types/domain";
-import { fetchAdmins } from "../services/adminService";
+import { fetchAdmins, createAdmin, deleteAdmin } from "../services/adminService";
 import BackButton from "../components/common/BackButton";
 import PageContainer from "../components/layout/PageContainer";
 
@@ -16,15 +16,28 @@ export const AdminAdminsManagementPage: React.FC<
   const [searchText, setSearchText] = useState("");
 
   // yeni admin ekleme formu için stateler
-  const [newFirstName, setNewFirstName] = useState("");
-  const [newLastName, setNewLastName] = useState("");
+  // yeni admin ekleme formu için stateler
   const [newUsername, setNewUsername] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newNationalId, setNewNationalId] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    fetchAdmins().then((data) => setAdmins(data));
+    setLoading(true);
+    fetchAdmins()
+      .then((data) => {
+        // Backend'den id gelmezse username'i id olarak kullan
+        const mappedData = data.map((a) => ({
+          ...a,
+          id: a.id || a.username,
+        }));
+        setAdmins(mappedData);
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Adminler yüklenirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const visibleAdmins = useMemo(() => {
@@ -32,17 +45,7 @@ export const AdminAdminsManagementPage: React.FC<
     if (!q) return admins;
 
     return admins.filter((admin) => {
-      const text = (
-        admin.firstName +
-        " " +
-        admin.lastName +
-        " " +
-        admin.username +
-        " " +
-        admin.email +
-        " " +
-        admin.nationalId
-      ).toLocaleLowerCase("tr-TR");
+      const text = admin.username.toLocaleLowerCase("tr-TR");
 
       return text.includes(q);
     });
@@ -50,40 +53,54 @@ export const AdminAdminsManagementPage: React.FC<
 
   const handleAddAdmin = () => {
     if (
-      !newFirstName.trim() ||
-      !newLastName.trim() ||
       !newUsername.trim() ||
-      !newEmail.trim() ||
-      !newNationalId.trim() ||
       !newPassword.trim()
     ) {
       return;
     }
 
-    // TODO: backend POST /api/admin/users
-    const newAdmin: AdminUser = {
-      id: `a${Date.now()}`,
-      firstName: newFirstName.trim(),
-      lastName: newLastName.trim(),
+    setLoading(true);
+    // Backend POST /api/admin/users
+    const newAdminPayload: AdminUser = {
+      id: "", // Backend atayacak
       username: newUsername.trim(),
-      email: newEmail.trim(),
-      nationalId: newNationalId.trim(),
-    };
+      // password alanı AdminUser tipinde yok, backend muhtemelen ayrı alıyor veya tip güncellenmeli.
+      // Şimdilik AdminUser tipini güncellemeden gönderemeyiz, ancak backend bekliyorsa
+      // payload'ı any veya genişletilmiş bir tip olarak gönderebiliriz.
+      // Varsayım: Backend şifreyi de bekliyor.
+      password: newPassword.trim(),
+    } as AdminUser & { password?: string };
 
-    setAdmins((prev) => [...prev, newAdmin]);
-
-    // formu temizle
-    setNewFirstName("");
-    setNewLastName("");
-    setNewUsername("");
-    setNewEmail("");
-    setNewNationalId("");
-    setNewPassword("");
+    createAdmin(newAdminPayload)
+      .then((createdAdmin) => {
+        setAdmins((prev) => [
+          ...prev,
+          { ...createdAdmin, id: createdAdmin.id || createdAdmin.username },
+        ]);
+        // formu temizle
+        setNewUsername("");
+        setNewPassword("");
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Admin eklenirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
   };
 
-  const handleDeleteAdmin = (id: string) => {
-    // TODO: backend DELETE /api/admin/users/{id}
-    setAdmins((prev) => prev.filter((a) => a.id !== id));
+  const handleDeleteAdmin = (username: string) => {
+    if (!window.confirm("Bu admini silmek istediğinize emin misiniz?")) return;
+
+    setLoading(true);
+    deleteAdmin(username)
+      .then(() => {
+        setAdmins((prev) => prev.filter((a) => a.username !== username));
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Admin silinirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -117,7 +134,7 @@ export const AdminAdminsManagementPage: React.FC<
             <span style={{ fontSize: "14px", fontWeight: 600 }}>Filtre:</span>
             <input
               type="text"
-              placeholder="Ad, soyad, kullanıcı adı, e-posta veya T.C. içinde ara..."
+              placeholder="Kullanıcı adı ara..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               style={{
@@ -139,7 +156,8 @@ export const AdminAdminsManagementPage: React.FC<
               backgroundColor: "#f8f9fa",
             }}
           >
-            {visibleAdmins.map((admin) => (
+            {loading && <p>Yükleniyor...</p>}
+            {!loading && visibleAdmins.map((admin) => (
               <div
                 key={admin.id}
                 style={{
@@ -160,47 +178,37 @@ export const AdminAdminsManagementPage: React.FC<
                 >
                   <div>
                     <div style={{ fontWeight: 600 }}>
-                      {admin.firstName} {admin.lastName}
-                    </div>
-                    <div style={{ fontSize: "12px", color: "#555" }}>
                       Kullanıcı adı: {admin.username}
                     </div>
                   </div>
-                  <div style={{ fontSize: "12px", color: "#555" }}>
-                    T.C.: {admin.nationalId}
-                  </div>
-                </div>
 
-                <div style={{ fontSize: "13px", marginBottom: "4px" }}>
-                  <strong>E-posta:</strong> {admin.email}
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    marginTop: "4px",
-                  }}
-                >
-                  <button
-                    onClick={() => handleDeleteAdmin(admin.id)}
+                  <div
                     style={{
-                      padding: "4px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid #dc3545",
-                      backgroundColor: "white",
-                      color: "#dc3545",
-                      cursor: "pointer",
-                      fontSize: "12px",
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      marginTop: "4px",
                     }}
                   >
-                    Admini Sil
-                  </button>
+                    <button
+                      onClick={() => handleDeleteAdmin(admin.username)}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "6px",
+                        border: "1px solid #dc3545",
+                        backgroundColor: "white",
+                        color: "#dc3545",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                      }}
+                    >
+                      Admini Sil
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
 
-            {visibleAdmins.length === 0 && (
+            {!loading && visibleAdmins.length === 0 && (
               <p style={{ color: "#777", fontSize: "14px" }}>
                 Filtrenize göre admin bulunamadı.
               </p>
@@ -220,79 +228,11 @@ export const AdminAdminsManagementPage: React.FC<
 
           <div style={{ marginBottom: "8px" }}>
             <label style={{ fontSize: "14px", fontWeight: 600 }}>
-              Ad:
-              <input
-                type="text"
-                value={newFirstName}
-                onChange={(e) => setNewFirstName(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "6px 8px",
-                  marginTop: "4px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: "8px" }}>
-            <label style={{ fontSize: "14px", fontWeight: 600 }}>
-              Soyad:
-              <input
-                type="text"
-                value={newLastName}
-                onChange={(e) => setNewLastName(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "6px 8px",
-                  marginTop: "4px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: "8px" }}>
-            <label style={{ fontSize: "14px", fontWeight: 600 }}>
               Kullanıcı adı:
               <input
                 type="text"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "6px 8px",
-                  marginTop: "4px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: "8px" }}>
-            <label style={{ fontSize: "14px", fontWeight: 600 }}>
-              E-posta:
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "6px 8px",
-                  marginTop: "4px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: "8px" }}>
-            <label style={{ fontSize: "14px", fontWeight: 600 }}>
-              T.C. Kimlik No:
-              <input
-                type="text"
-                value={newNationalId}
-                onChange={(e) => setNewNationalId(e.target.value)}
                 style={{
                   width: "100%",
                   padding: "6px 8px",

@@ -57,6 +57,7 @@ export interface AdminHospital {
   id: string;
   name: string;
   city: string;
+  district: string;
 }
 
 export interface AdminDepartment {
@@ -84,7 +85,7 @@ export interface AdminPatient {
   weightKg: number;
 }
 
-export type AdminAppointmentStatus = "PAST" | "FUTURE";
+export type AdminAppointmentStatus = "PAST" | "FUTURE" | "completed" | "cancelled" | "booked";
 
 export interface AdminAppointment {
   id: number;
@@ -124,11 +125,11 @@ export interface AdminWaitingItem {
 
 export interface AdminUser {
   id: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   username: string;
-  email: string;
-  nationalId: string;
+  email?: string;
+  nationalId?: string;
 }
 
 export type AdminDashboardSummary = {

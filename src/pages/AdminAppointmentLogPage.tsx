@@ -19,22 +19,35 @@ const AdminAppointmentLogPage: React.FC<AdminAppointmentLogPageProps> = ({
   const [dateTo, setDateTo] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "PAST" | "FUTURE">(
-    "ALL"
-  );
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "completed" | "cancelled" | "booked"
+  >("ALL");
   const [searchText, setSearchText] = useState<string>("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+
   // useEffect kaldırıldı (Otomatik yükleme yok)
 
   const handleSearch = () => {
+    setLoading(true);
+    // Yeni aramada sayfayı başa al
+    setPage(0);
+    fetchAppointments(0);
+  };
+
+  const fetchAppointments = (pageIndex: number) => {
     setLoading(true);
     fetchAdminAppointments({
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
       status: statusFilter === "ALL" ? undefined : statusFilter,
       search: searchText || undefined,
+      page: pageIndex,
+      size: size,
     })
       .then(setAppointments)
       .catch((err) => {
@@ -46,6 +59,12 @@ const AdminAppointmentLogPage: React.FC<AdminAppointmentLogPageProps> = ({
 
   const handleToggleExpand = (id: number) => {
     setExpandedId((prev) => (prev === id ? null : id));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 0) return;
+    setPage(newPage);
+    fetchAppointments(newPage);
   };
 
   // Client-side filtering kaldırıldı, backend'den gelen veri direkt gösterilecek.
@@ -113,7 +132,13 @@ const AdminAppointmentLogPage: React.FC<AdminAppointmentLogPageProps> = ({
             <select
               value={statusFilter}
               onChange={(e) =>
-                setStatusFilter(e.target.value as "ALL" | "PAST" | "FUTURE")
+                setStatusFilter(
+                  e.target.value as
+                  | "ALL"
+                  | "completed"
+                  | "cancelled"
+                  | "booked"
+                )
               }
               style={{
                 width: "100%",
@@ -123,8 +148,9 @@ const AdminAppointmentLogPage: React.FC<AdminAppointmentLogPageProps> = ({
               }}
             >
               <option value="ALL">Tümü</option>
-              <option value="PAST">Geçmiş</option>
-              <option value="FUTURE">Gelecek</option>
+              <option value="booked">Rezerve Edildi</option>
+              <option value="completed">Tamamlandı</option>
+              <option value="cancelled">İptal Edildi</option>
             </select>
           </div>
         </div>
@@ -206,7 +232,17 @@ const AdminAppointmentLogPage: React.FC<AdminAppointmentLogPageProps> = ({
                   </div>
                 </div>
                 <div style={{ textAlign: "right", fontSize: "13px" }}>
-                  {appt.status === "PAST" ? "Geçmiş" : "Gelecek"}{" "}
+                  {appt.status === "PAST"
+                    ? "Geçmiş"
+                    : appt.status === "FUTURE"
+                      ? "Gelecek"
+                      : appt.status === "booked"
+                        ? "Rezerve Edildi"
+                        : appt.status === "completed"
+                          ? "Tamamlandı"
+                          : appt.status === "cancelled"
+                            ? "İptal Edildi"
+                            : appt.status}{" "}
                   <span>{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </div>
@@ -224,6 +260,48 @@ const AdminAppointmentLogPage: React.FC<AdminAppointmentLogPageProps> = ({
         {!loading && filteredAppointments.length === 0 && (
           <p style={{ color: "#666" }}>Filtreye uyan randevu bulunamadı.</p>
         )}
+      </div>
+
+      {/* Pagination Controls */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "16px",
+          marginTop: "20px",
+          paddingBottom: "20px",
+        }}
+      >
+        <button
+          onClick={() => handlePageChange(page - 1)}
+          disabled={page === 0 || loading}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            backgroundColor: page === 0 ? "#f0f0f0" : "white",
+            cursor: page === 0 ? "not-allowed" : "pointer",
+          }}
+        >
+          &lt; Önceki
+        </button>
+        <span style={{ fontWeight: 600 }}>Sayfa {page + 1}</span>
+        <button
+          onClick={() => handlePageChange(page + 1)}
+          disabled={loading || appointments.length < size}
+          style={{
+            padding: "8px 16px",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            backgroundColor:
+              loading || appointments.length < size ? "#f0f0f0" : "white",
+            cursor:
+              loading || appointments.length < size ? "not-allowed" : "pointer",
+          }}
+        >
+          Sonraki &gt;
+        </button>
       </div>
     </PageContainer >
   );
