@@ -57,6 +57,7 @@ export interface AdminHospital {
   id: string;
   name: string;
   city: string;
+  district: string;
 }
 
 export interface AdminDepartment {
@@ -84,7 +85,7 @@ export interface AdminPatient {
   weightKg: number;
 }
 
-export type AdminAppointmentStatus = "PAST" | "FUTURE";
+export type AdminAppointmentStatus = "PAST" | "FUTURE" | "completed" | "cancelled" | "booked";
 
 export interface AdminAppointment {
   id: number;
@@ -96,16 +97,20 @@ export interface AdminAppointment {
   patientNationalId: string;
   status: AdminAppointmentStatus;
   prescriptionText?: string;
+  slotDateTime?: string; // Fallback for dateTime
+  date?: string; // Backend'den gelen olası tarih alanı
 }
 
 export interface AdminPrescription {
   id: string;
   date: string; // ISO date string: "2025-11-29"
+  prescriptionDateTime?: string; // Backend'den gelen olası tarih alanı
   patientName: string;
   doctorName: string;
   hospitalName: string;
   departmentName: string;
   medicines: string[]; // ilaç isimleri
+  drugs?: string[]; // Backend'den gelen olası ilaç listesi
 }
 
 export interface AdminWaitingItem {
@@ -120,11 +125,11 @@ export interface AdminWaitingItem {
 
 export interface AdminUser {
   id: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   username: string;
-  email: string;
-  nationalId: string;
+  email?: string;
+  nationalId?: string;
 }
 
 export type AdminDashboardSummary = {

@@ -1,7 +1,7 @@
 // src/pages/admin/AdminWaitingListManagementPage.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { AdminWaitingItem } from "../types/domain";
-import { fetchAdminWaitingList } from "../services/adminService";
+import { fetchAdminWaitingList, deleteAdminWaitingItem } from "../services/adminService";
 import BackButton from "../components/common/BackButton";
 import PageContainer from "../components/layout/PageContainer";
 
@@ -15,8 +15,17 @@ export const AdminWaitingListManagementPage: React.FC<
   const [waitingList, setWaitingList] = useState<AdminWaitingItem[]>([]);
   const [searchText, setSearchText] = useState("");
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    fetchAdminWaitingList().then((data) => setWaitingList(data));
+    setLoading(true);
+    fetchAdminWaitingList()
+      .then(setWaitingList)
+      .catch((err) => {
+        console.error(err);
+        alert("Bekleme listesi yüklenirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const visibleItems = useMemo(() => {
@@ -40,9 +49,19 @@ export const AdminWaitingListManagementPage: React.FC<
     });
   }, [waitingList, searchText]);
 
-  const handleDeleteItem = (id: string) => {
-    // TODO: backend delete endpoint’ine bağla
-    setWaitingList((prev) => prev.filter((w) => w.id !== id));
+  const handleDeleteItem = async (id: string) => {
+    if (!window.confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
+
+    setLoading(true);
+    try {
+      await deleteAdminWaitingItem(id);
+      setWaitingList((prev) => prev.filter((w) => w.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Kayıt silinirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -90,7 +109,8 @@ export const AdminWaitingListManagementPage: React.FC<
           backgroundColor: "#f8f9fa",
         }}
       >
-        {visibleItems.map((item) => (
+        {loading && <p>Yükleniyor...</p>}
+        {!loading && visibleItems.map((item) => (
           <div
             key={item.id}
             style={{
@@ -161,7 +181,7 @@ export const AdminWaitingListManagementPage: React.FC<
           </div>
         ))}
 
-        {visibleItems.length === 0 && (
+        {!loading && visibleItems.length === 0 && (
           <p style={{ color: "#777", fontSize: "14px" }}>
             Filtrenize uygun bekleme listesi kaydı bulunamadı.
           </p>

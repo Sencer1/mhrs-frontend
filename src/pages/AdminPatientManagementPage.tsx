@@ -1,7 +1,11 @@
 // src/pages/AdminPatientManagementPage.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import { AdminPatient } from "../types/domain";
-import { fetchAdminPatients } from "../services/adminService";
+import {
+  fetchAdminPatients,
+  createAdminPatient,
+  deleteAdminPatient,
+} from "../services/adminService";
 import PageContainer from "../components/layout/PageContainer";
 import BackButton from "../components/common/BackButton";
 
@@ -22,8 +26,23 @@ const AdminPatientManagementPage: React.FC<
   const [newHeightCm, setNewHeightCm] = useState<string>("");
   const [newWeightKg, setNewWeightKg] = useState<string>("");
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    fetchAdminPatients().then(setPatients);
+    setLoading(true);
+    fetchAdminPatients()
+      .then((data) => {
+        const mappedData = data.map((p) => ({
+          ...p,
+          id: p.nationalId,
+        }));
+        setPatients(mappedData);
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Hastalar yüklenirken hata oluştu.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const visiblePatients = useMemo(() => {
@@ -41,7 +60,7 @@ const AdminPatientManagementPage: React.FC<
     });
   }, [patients, filterText]);
 
-  const handleAddPatient = () => {
+  const handleAddPatient = async () => {
     if (
       !newFirstName.trim() ||
       !newLastName.trim() ||
@@ -50,30 +69,50 @@ const AdminPatientManagementPage: React.FC<
       return;
     }
 
-    const h = parseInt(newHeightCm, 10);
-    const w = parseInt(newWeightKg, 10);
+    setLoading(true);
+    try {
+      const h = parseInt(newHeightCm, 10);
+      const w = parseInt(newWeightKg, 10);
 
-    const newPatient: AdminPatient = {
-      id: `p${Date.now()}`,
-      firstName: newFirstName.trim(),
-      lastName: newLastName.trim(),
-      nationalId: newNationalId.trim(),
-      bloodGroup: newBloodGroup,
-      heightCm: isNaN(h) ? 0 : h,
-      weightKg: isNaN(w) ? 0 : w,
-    };
+      const newPatient: AdminPatient = {
+        id: "", // Backend atayacak
+        firstName: newFirstName.trim(),
+        lastName: newLastName.trim(),
+        nationalId: newNationalId.trim(),
+        bloodGroup: newBloodGroup,
+        heightCm: isNaN(h) ? 0 : h,
+        weightKg: isNaN(w) ? 0 : w,
+      };
 
-    setPatients((prev) => [...prev, newPatient]);
+      const createdPatient = await createAdminPatient(newPatient);
+      setPatients((prev) => [...prev, { ...createdPatient, id: createdPatient.nationalId }]);
 
-    setNewFirstName("");
-    setNewLastName("");
-    setNewNationalId("");
-    setNewHeightCm("");
-    setNewWeightKg("");
+      setNewFirstName("");
+      setNewLastName("");
+      setNewNationalId("");
+      setNewHeightCm("");
+      setNewWeightKg("");
+    } catch (err) {
+      console.error(err);
+      alert("Hasta eklenirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeletePatient = (id: string) => {
-    setPatients((prev) => prev.filter((p) => p.id !== id));
+  const handleDeletePatient = async (id: string) => {
+    if (!window.confirm("Bu hastayı silmek istediğinize emin misiniz?")) return;
+
+    setLoading(true);
+    try {
+      await deleteAdminPatient(id);
+      setPatients((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Hasta silinirken hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -231,7 +270,8 @@ const AdminPatientManagementPage: React.FC<
           backgroundColor: "#ffffff",
         }}
       >
-        {visiblePatients.map((p) => (
+        {loading && <p>Yükleniyor...</p>}
+        {!loading && visiblePatients.map((p) => (
           <div
             key={p.id}
             style={{
@@ -272,7 +312,7 @@ const AdminPatientManagementPage: React.FC<
           </div>
         ))}
 
-        {visiblePatients.length === 0 && (
+        {!loading && visiblePatients.length === 0 && (
           <p style={{ color: "#666", margin: 0 }}>Kayıtlı hasta bulunamadı.</p>
         )}
       </div>
